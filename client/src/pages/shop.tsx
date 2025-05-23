@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Filter, Search } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { Link } from "wouter";
 
 // Sample product data
 const products = [
@@ -205,11 +207,20 @@ const ProductCard = ({ product, onAddToCart }: {
 const ShopPage = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [cart, setCart] = useState<typeof products>([]);
+  const { addToCart, getTotalItems } = useCart();
   
-  const addToCart = (product: typeof products[0]) => {
-    setCart([...cart, product]);
-    // In a real app, you would handle quantities and duplicates here
+  // Convert product to cart item and add to cart
+  // Helper function to add products to cart
+const handleAddToCart = (product: any) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price.toString(),
+      quantity: 1,
+      image: product.image,
+      category: product.category,
+      unit: product.unit
+    });
   };
   
   // Filter products based on active tab and search term
@@ -251,10 +262,12 @@ const ShopPage = () => {
               <Button size="sm" variant="outline">Distance</Button>
               <Button size="sm" variant="outline">Price</Button>
             </div>
-            <div className="ml-auto text-sm flex items-center">
-              <ShoppingCart className="h-5 w-5 mr-1 text-primary" />
-              <span className="font-semibold">{cart.length} items</span>
-            </div>
+            <Link href="/cart" className="ml-auto">
+              <div className="text-sm flex items-center hover:text-primary transition-colors">
+                <ShoppingCart className="h-5 w-5 mr-1 text-primary" />
+                <span className="font-semibold">{getTotalItems()} items</span>
+              </div>
+            </Link>
           </div>
         </div>
         
@@ -267,7 +280,7 @@ const ShopPage = () => {
                 <ProductCard 
                   key={product.id} 
                   product={product} 
-                  onAddToCart={addToCart} 
+                  onAddToCart={handleAddToCart} 
                 />
               ))}
             </div>
@@ -324,7 +337,7 @@ const ShopPage = () => {
                   <ProductCard 
                     key={product.id} 
                     product={product} 
-                    onAddToCart={addToCart} 
+                    onAddToCart={handleAddToCart} 
                   />
                 ))}
               </div>
