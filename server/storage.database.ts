@@ -1,9 +1,10 @@
-import { users, type User, type InsertUser, type Contact, type InsertContact, contactSubmissions } from "@shared/schema";
+import { users, type User, type InsertUser, type Contact, type InsertContact, contactSubmissions, products, type Product, type InsertProduct } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
+  // User-related methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -11,6 +12,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
@@ -21,7 +27,27 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
+  
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        ...userData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, id));
+    return true; // In Postgres, if no rows were deleted, it would just affect 0 rows
+  }
 
+  // Contact-related methods
   async createContactSubmission(contact: InsertContact): Promise<Contact> {
     const [newContact] = await db
       .insert(contactSubmissions)
@@ -37,6 +63,80 @@ export class DatabaseStorage implements IStorage {
 
   async getAllContactSubmissions(): Promise<Contact[]> {
     return await db.select().from(contactSubmissions);
+  }
+  
+  async getContactSubmission(id: number): Promise<Contact | undefined> {
+    const [contact] = await db
+      .select()
+      .from(contactSubmissions)
+      .where(eq(contactSubmissions.id, id));
+    return contact || undefined;
+  }
+  
+  async updateContactStatus(id: number, status: string, assignedTo?: string): Promise<Contact | undefined> {
+    const [updatedContact] = await db
+      .update(contactSubmissions)
+      .set({
+        status,
+        assignedTo: assignedTo || null
+      })
+      .where(eq(contactSubmissions.id, id))
+      .returning();
+    return updatedContact;
+  }
+  
+  // Product-related methods
+  async getAllProducts(): Promise<Product[]> {
+    return await db.select().from(products);
+  }
+  
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(eq(products.category, category));
+  }
+  
+  async getFeaturedProducts(): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(eq(products.featured, true));
+  }
+  
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, id));
+    return product || undefined;
+  }
+  
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db
+      .insert(products)
+      .values(product)
+      .returning();
+    return newProduct;
+  }
+  
+  async updateProduct(id: number, productData: Partial<Product>): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set({
+        ...productData,
+        updatedAt: new Date()
+      })
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct;
+  }
+  
+  async deleteProduct(id: number): Promise<boolean> {
+    await db
+      .delete(products)
+      .where(eq(products.id, id));
+    return true;
   }
 }
 
