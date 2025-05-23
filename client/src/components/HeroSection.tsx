@@ -22,7 +22,7 @@ const HeroSection = () => {
           <div className="grid grid-cols-1 gap-6 w-full">
             <div className="rounded-container shadow-md overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                src="https://cdn.pixabay.com/photo/2016/08/11/08/04/vegetables-1584999_1280.jpg" 
                 alt="Fresh colorful fruits and vegetables" 
                 className="w-full h-full object-cover"
               />

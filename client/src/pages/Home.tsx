@@ -45,19 +45,19 @@ const Home = () => {
             <FarmFeature 
               title="Seasonal Vegetables" 
               description="Fresh, organic vegetables harvested at peak ripeness for maximum flavor and nutrition."
-              image="https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+              image="https://cdn.pixabay.com/photo/2016/09/10/17/47/vegetables-1659784_1280.jpg"
             />
             
             <FarmFeature 
               title="Organic Fruits" 
               description="Sweet, juicy fruits grown without synthetic pesticides or fertilizers."
-              image="https://images.unsplash.com/photo-1610832958506-aa56368176cf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+              image="https://cdn.pixabay.com/photo/2017/05/11/19/44/fresh-fruits-2305192_1280.jpg"
             />
             
             <FarmFeature 
               title="Farm-Fresh Dairy" 
               description="Locally produced milk, cheese, and yogurt from pasture-raised animals."
-              image="https://images.unsplash.com/photo-1628088062854-d1870b4553da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+              image="https://cdn.pixabay.com/photo/2017/03/27/14/21/cheese-2179759_1280.jpg"
             />
           </div>
           
@@ -85,7 +85,7 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="rounded-container overflow-hidden shadow-md">
               <img 
-                src="https://images.unsplash.com/photo-1625757840851-a49eda5c3a00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
+                src="https://cdn.pixabay.com/photo/2016/10/27/17/50/farm-1775892_1280.jpg" 
                 alt="Sustainable farming practices" 
                 className="w-full h-64 object-cover"
               />

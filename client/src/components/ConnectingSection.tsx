@@ -8,7 +8,7 @@ const ConnectingSection = () => {
           <div className="md:w-1/3 mb-8 md:mb-0">
             <div className="rounded-container overflow-hidden shadow-lg">
               <img 
-                src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
+                src="https://cdn.pixabay.com/photo/2017/10/09/19/29/eat-2834549_1280.jpg" 
                 alt="Colorful vegetables and fruits" 
                 className="w-full h-full object-cover"
               />
@@ -35,7 +35,7 @@ const ConnectingSection = () => {
           <div className="md:w-1/3">
             <div className="rounded-container overflow-hidden shadow-lg">
               <img 
-                src="https://images.unsplash.com/photo-1585837575652-267c041d77b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
+                src="https://cdn.pixabay.com/photo/2017/07/24/22/25/sunset-2535803_1280.jpg" 
                 alt="Farming equipment in a green field" 
                 className="w-full h-full object-cover"
               />
