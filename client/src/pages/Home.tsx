@@ -93,7 +93,7 @@ const Home = () => {
             
             <div className="rounded-container overflow-hidden shadow-md">
               <img 
-                src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
+                src="https://cdn.pixabay.com/photo/2020/06/20/17/36/wheat-5321890_1280.jpg" 
                 alt="Organic crop fields" 
                 className="w-full h-64 object-cover"
               />
@@ -101,7 +101,7 @@ const Home = () => {
             
             <div className="rounded-container overflow-hidden shadow-md">
               <img 
-                src="https://images.unsplash.com/photo-1565647952915-9644fcd503a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
+                src="https://cdn.pixabay.com/photo/2020/05/14/19/36/tractor-5171589_1280.jpg" 
                 alt="Modern farming equipment" 
                 className="w-full h-64 object-cover"
               />
