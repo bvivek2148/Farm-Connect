@@ -1,10 +1,33 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactValidationSchema } from "@shared/schema";
+import { 
+  insertContactValidationSchema, 
+  insertProductSchema,
+  loginUserSchema,
+  registerUserSchema
+} from "@shared/schema";
 import { ZodError } from "zod";
+import cookieParser from "cookie-parser";
+import { 
+  authenticate, 
+  authorize, 
+  registerHandler, 
+  loginHandler, 
+  logoutHandler, 
+  currentUserHandler 
+} from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add middleware
+  app.use(cookieParser());
+  
+  // Auth routes
+  app.post("/api/auth/signup", registerHandler);
+  app.post("/api/auth/signin", loginHandler);
+  app.post("/api/auth/logout", logoutHandler);
+  app.get("/api/auth/user", authenticate, currentUserHandler);
+  
   // API route for contact form submissions
   app.post("/api/contact", async (req, res) => {
     try {
@@ -37,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all contact submissions (for admin purposes)
-  app.get("/api/contact", async (req, res) => {
+  app.get("/api/contact", authenticate, authorize(["admin"]), async (req, res) => {
     try {
       const submissions = await storage.getAllContactSubmissions();
       res.status(200).json({
@@ -49,6 +72,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: "Failed to retrieve contact submissions"
+      });
+    }
+  });
+  
+  // Shop routes - Products
+  app.get("/api/products", async (req, res) => {
+    try {
+      const { category } = req.query;
+      
+      // If category query parameter is provided, filter products by category
+      let products;
+      if (category && typeof category === 'string') {
+        products = await storage.getProductsByCategory(category);
+      } else {
+        products = await storage.getAllProducts();
+      }
+      
+      res.status(200).json({
+        success: true,
+        data: products
+      });
+    } catch (error) {
+      console.error("Error retrieving products:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to retrieve products"
+      });
+    }
+  });
+  
+  // Get featured products
+  app.get("/api/products/featured", async (req, res) => {
+    try {
+      const featuredProducts = await storage.getFeaturedProducts();
+      res.status(200).json({
+        success: true,
+        data: featuredProducts
+      });
+    } catch (error) {
+      console.error("Error retrieving featured products:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to retrieve featured products"
+      });
+    }
+  });
+  
+  // Get single product by ID
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid product ID"
+        });
+      }
+      
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found"
+        });
+      }
+      
+      res.status(200).json({
+        success: true,
+        data: product
+      });
+    } catch (error) {
+      console.error("Error retrieving product:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to retrieve product"
+      });
+    }
+  });
+  
+  // Create new product (farmers/admin only)
+  app.post("/api/products", authenticate, authorize(["farmer", "admin"]), async (req, res) => {
+    try {
+      const validatedData = insertProductSchema.parse(req.body);
+      const newProduct = await storage.createProduct(validatedData);
+      
+      res.status(201).json({
+        success: true,
+        message: "Product created successfully",
+        data: newProduct
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid product data", 
+          errors: error.format() 
+        });
+      }
+      
+      console.error("Error creating product:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to create product"
+      });
+    }
+  });
+  
+  // Update product (farmers/admin only)
+  app.put("/api/products/:id", authenticate, authorize(["farmer", "admin"]), async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid product ID"
+        });
+      }
+      
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found"
+        });
+      }
+      
+      // For farmers, ensure they can only update their own products
+      if (req.user?.role === "farmer" && product.farmerId !== req.user.userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You can only update your own products"
+        });
+      }
+      
+      const updatedProduct = await storage.updateProduct(productId, req.body);
+      
+      res.status(200).json({
+        success: true,
+        message: "Product updated successfully",
+        data: updatedProduct
+      });
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to update product"
+      });
+    }
+  });
+  
+  // Delete product (farmers/admin only)
+  app.delete("/api/products/:id", authenticate, authorize(["farmer", "admin"]), async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid product ID"
+        });
+      }
+      
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "Product not found"
+        });
+      }
+      
+      // For farmers, ensure they can only delete their own products
+      if (req.user?.role === "farmer" && product.farmerId !== req.user.userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You can only delete your own products"
+        });
+      }
+      
+      await storage.deleteProduct(productId);
+      
+      res.status(200).json({
+        success: true,
+        message: "Product deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to delete product"
       });
     }
   });

@@ -88,7 +88,7 @@ export const products = pgTable("products", {
   organic: boolean("organic").default(true).notNull(),
   featured: boolean("featured").default(false).notNull(),
   description: text("description"),
-  stock: serial("stock").default(100).notNull(),
+  stock: serial("stock").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
