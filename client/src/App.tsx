@@ -9,6 +9,7 @@ import Home from "@/pages/Home";
 import Contact from "@/pages/contact";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { CartProvider } from "@/context/CartContext";
 
 // Lazy load pages for better performance
 const Shop = lazy(() => import("@/pages/shop"));
@@ -16,6 +17,8 @@ const Services = lazy(() => import("@/pages/services"));
 const Pricing = lazy(() => import("@/pages/pricing"));
 const AboutUs = lazy(() => import("@/pages/about-us"));
 const Farmer = lazy(() => import("@/pages/farmer"));
+const Cart = lazy(() => import("@/pages/cart"));
+const Checkout = lazy(() => import("@/pages/checkout"));
 
 function Router() {
   return (
@@ -31,6 +34,8 @@ function Router() {
             <Route path="/pricing" component={Pricing} />
             <Route path="/about-us" component={AboutUs} />
             <Route path="/farmer" component={Farmer} />
+            <Route path="/cart" component={Cart} />
+            <Route path="/checkout" component={Checkout} />
             {/* Fallback to 404 */}
             <Route component={NotFound} />
           </Switch>
@@ -45,8 +50,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <CartProvider>
+          <Toaster />
+          <Router />
+        </CartProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

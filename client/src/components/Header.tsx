@@ -2,9 +2,14 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { Menu, X, Search, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/context/CartContext";
+import { Badge } from "@/components/ui/badge";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { getTotalItems } = useCart();
+  
+  const cartItemCount = getTotalItems();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -52,9 +57,21 @@ const Header = () => {
             <Button variant="ghost" size="icon" className="text-white" aria-label="Search">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-white" aria-label="Cart">
-              <ShoppingCart className="h-5 w-5" />
-            </Button>
+            <Link href="/cart">
+              <a className="relative">
+                <Button variant="ghost" size="icon" className="text-white" aria-label="Cart">
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartItemCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {cartItemCount}
+                    </Badge>
+                  )}
+                </Button>
+              </a>
+            </Link>
             <Link href="/sign-in">
               <a className="hidden md:block py-2 font-medium hover:text-gray-200">Sign in</a>
             </Link>
