@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,17 +10,31 @@ import Contact from "@/pages/contact";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+// Lazy load pages for better performance
+const Shop = lazy(() => import("@/pages/shop"));
+const Services = lazy(() => import("@/pages/services"));
+const Pricing = lazy(() => import("@/pages/pricing"));
+const AboutUs = lazy(() => import("@/pages/about-us"));
+const Farmer = lazy(() => import("@/pages/farmer"));
+
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow">
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/contact" component={Contact} />
-          {/* Fallback to 404 */}
-          <Route component={NotFound} />
-        </Switch>
+        <Suspense fallback={<div className="p-12 text-center">Loading...</div>}>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/shop" component={Shop} />
+            <Route path="/services" component={Services} />
+            <Route path="/pricing" component={Pricing} />
+            <Route path="/about-us" component={AboutUs} />
+            <Route path="/farmer" component={Farmer} />
+            {/* Fallback to 404 */}
+            <Route component={NotFound} />
+          </Switch>
+        </Suspense>
       </main>
       <Footer />
     </div>
