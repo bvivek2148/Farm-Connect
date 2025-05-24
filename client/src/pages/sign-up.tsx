@@ -19,6 +19,8 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { User, Lock, Mail, Facebook, Github, ArrowLeft } from "lucide-react";
 
 // Form schema for validation
 const signUpSchema = z.object({

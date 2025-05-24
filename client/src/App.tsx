@@ -10,6 +10,7 @@ import Contact from "@/pages/contact";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
+import { StatisticsProvider } from "@/context/StatisticsContext";
 
 // Lazy load pages for better performance
 const Shop = lazy(() => import("@/pages/shop"));
@@ -54,10 +55,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CartProvider>
-          <Toaster />
-          <Router />
-        </CartProvider>
+        <StatisticsProvider>
+          <CartProvider>
+            <Toaster />
+            <Router />
+          </CartProvider>
+        </StatisticsProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
