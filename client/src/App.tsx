@@ -19,6 +19,8 @@ const AboutUs = lazy(() => import("@/pages/about-us"));
 const Farmer = lazy(() => import("@/pages/farmer"));
 const Cart = lazy(() => import("@/pages/cart"));
 const Checkout = lazy(() => import("@/pages/checkout"));
+const AdminLogin = lazy(() => import("@/pages/admin-login"));
+const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
 
 function Router() {
   return (
@@ -36,6 +38,8 @@ function Router() {
             <Route path="/farmer" component={Farmer} />
             <Route path="/cart" component={Cart} />
             <Route path="/checkout" component={Checkout} />
+            <Route path="/admin-login" component={AdminLogin} />
+            <Route path="/admin-dashboard" component={AdminDashboard} />
             {/* Fallback to 404 */}
             <Route component={NotFound} />
           </Switch>
