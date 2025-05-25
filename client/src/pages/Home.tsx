@@ -129,31 +129,7 @@ const Home = () => {
           </div>
           
           {/* Farm Connect Statistics Section */}
-          <div className="mt-16 bg-primary rounded-xl p-8 text-white max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold mb-6 text-center">Our Growing Community</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-              <div className="p-4">
-                <div className="text-4xl font-bold mb-2">248</div>
-                <p className="text-gray-100">Farms Registered</p>
-              </div>
-              
-              <div className="p-4">
-                <div className="text-4xl font-bold mb-2">5,842</div>
-                <p className="text-gray-100">Customers Registered</p>
-              </div>
-              
-              <div className="p-4">
-                <div className="text-4xl font-bold mb-2">3,127</div>
-                <p className="text-gray-100">Active Users</p>
-              </div>
-              
-              <div className="p-4">
-                <div className="text-4xl font-bold mb-2">15,749</div>
-                <p className="text-gray-100">Unique Visitors</p>
-              </div>
-            </div>
-          </div>
+          <StatsSection />
         </div>
       </section>
     </>
