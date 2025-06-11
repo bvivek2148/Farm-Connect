@@ -31,3 +31,21 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
 }
+
+/**
+ * Currency conversion and formatting utilities for Indian market
+ */
+const USD_TO_INR_RATE = 83; // Approximate conversion rate
+
+export function convertUsdToInr(usdPrice: number): number {
+  return Math.round(usdPrice * USD_TO_INR_RATE);
+}
+
+export function formatINR(price: number): string {
+  return `₹${price.toLocaleString('en-IN')}`;
+}
+
+export function formatINRFromUSD(usdPrice: number): string {
+  const inrPrice = convertUsdToInr(usdPrice);
+  return formatINR(inrPrice);
+}

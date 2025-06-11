@@ -12,14 +12,15 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { MinusIcon, PlusIcon, ShoppingCartIcon, TrashIcon } from 'lucide-react';
+import { convertUsdToInr, formatINR } from "@/lib/utils";
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getTotalItems, getTotalPrice } = useCart();
   const [location, navigate] = useLocation();
   
-  // Format the price with two decimal places and a dollar sign
+  // Format the price in Indian Rupees
   const formatPrice = (price: number) => {
-    return `$${price.toFixed(2)}`;
+    return formatINR(convertUsdToInr(price));
   };
   
   const handleCheckout = () => {

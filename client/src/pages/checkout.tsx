@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, ShoppingBag } from 'lucide-react';
+import { convertUsdToInr, formatINR } from "@/lib/utils";
 
 // Checkout form schema
 const checkoutFormSchema = z.object({
@@ -46,9 +47,9 @@ export default function Checkout() {
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // Format the price with two decimal places and a dollar sign
+  // Format the price in Indian Rupees
   const formatPrice = (price: number) => {
-    return `$${price.toFixed(2)}`;
+    return formatINR(convertUsdToInr(price));
   };
   
   // Initialize form

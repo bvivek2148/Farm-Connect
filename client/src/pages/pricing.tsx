@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { convertUsdToInr, formatINR } from "@/lib/utils";
 
 const PricingFeature = ({ feature, included = true, tooltip }: { 
   feature: string; 
@@ -82,13 +83,15 @@ const PricingTier = ({
       <p className="mt-1 text-gray-500 text-sm">{description}</p>
       
       <div className="mt-4 flex items-baseline">
-        <span className="text-3xl font-bold">${isAnnual ? annualPrice : monthlyPrice}</span>
+        <span className="text-3xl font-bold">
+          {formatINR(convertUsdToInr(isAnnual ? price.annual : price.monthly))}
+        </span>
         <span className="ml-1 text-gray-500">/{isAnnual ? 'year' : 'month'}</span>
       </div>
-      
+
       {isAnnual && (
         <div className="mt-1 text-sm text-green-600">
-          Save ${(price.monthly * 12 - price.annual).toFixed(2)} annually
+          Save {formatINR(convertUsdToInr(price.monthly * 12 - price.annual))} annually
         </div>
       )}
       

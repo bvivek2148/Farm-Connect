@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Filter, Search } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Link } from "wouter";
+import { convertUsdToInr, formatINR } from "@/lib/utils";
 
 // Sample product data
 const products = [
@@ -191,9 +192,9 @@ const ProductCard = ({ product, onAddToCart }: {
         <p className="text-sm text-gray-500">Category: {product.category}</p>
       </CardContent>
       <CardFooter className="flex justify-between pt-2">
-        <div className="font-semibold">${product.price} / {product.unit}</div>
-        <Button 
-          size="sm" 
+        <div className="font-semibold">{formatINR(convertUsdToInr(product.price))} / {product.unit}</div>
+        <Button
+          size="sm"
           onClick={() => onAddToCart(product)}
           className="bg-secondary hover:bg-secondary/90"
         >
