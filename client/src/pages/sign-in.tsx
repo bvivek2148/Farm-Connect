@@ -213,7 +213,15 @@ const SignInPage = () => {
                 </Button>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col">
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-center text-sm">
+                Don't have an account?{" "}
+                <Link href="/sign-up">
+                  <a className="text-primary hover:underline font-medium">
+                    Sign up here
+                  </a>
+                </Link>
+              </div>
               <div className="text-center text-xs text-gray-500">
                 By signing in, you agree to our Terms of Service and Privacy Policy
               </div>
