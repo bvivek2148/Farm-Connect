@@ -5,10 +5,10 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import PageLoader from "@/components/PageLoader";
 import ScrollProgress from "@/components/ScrollProgress";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const FarmFeature = ({ title, description, image, index }: {
   title: string;
@@ -16,6 +16,10 @@ const FarmFeature = ({ title, description, image, index }: {
   image: string;
   index: number;
 }) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(title)}`;
+  };
+
   return (
     <motion.div
       className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300"
@@ -32,6 +36,8 @@ const FarmFeature = ({ title, description, image, index }: {
           className="w-full h-full object-cover"
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.3 }}
+          onError={handleImageError}
+          loading="lazy"
         />
       </div>
       <div className="p-6">
@@ -52,17 +58,30 @@ const FarmFeature = ({ title, description, image, index }: {
 };
 
 const Home = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [location] = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
+
+  useEffect(() => {
+    // Check if we came from clicking the FarmConnect logo
+    // We'll use sessionStorage to track this
+    const shouldShowAnimation = sessionStorage.getItem('showHomeAnimation');
+    if (shouldShowAnimation === 'true') {
+      setShowAnimation(true);
+      setIsLoading(true);
+      sessionStorage.removeItem('showHomeAnimation'); // Clear it after use
+    }
+  }, []);
 
   return (
     <>
       <AnimatePresence>
-        {isLoading && (
+        {isLoading && showAnimation && (
           <PageLoader onComplete={() => setIsLoading(false)} />
         )}
       </AnimatePresence>
 
-      {!isLoading && (
+      {(!isLoading || !showAnimation) && (
         <motion.div
           className="relative"
           initial={{ opacity: 0 }}
@@ -99,21 +118,21 @@ const Home = () => {
             <FarmFeature
               title="Seasonal Vegetables"
               description="Fresh, organic vegetables harvested at peak ripeness for maximum flavor and nutrition."
-              image="https://cdn.pixabay.com/photo/2016/09/10/17/47/vegetables-1659784_1280.jpg"
+              image="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=300&fit=crop"
               index={0}
             />
 
             <FarmFeature
               title="Organic Fruits"
               description="Sweet, juicy fruits grown without synthetic pesticides or fertilizers."
-              image="https://cdn.pixabay.com/photo/2017/05/11/19/44/fresh-fruits-2305192_1280.jpg"
+              image="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop"
               index={1}
             />
 
             <FarmFeature
               title="Farm-Fresh Dairy"
               description="Locally produced milk, cheese, and yogurt from pasture-raised animals."
-              image="https://cdn.pixabay.com/photo/2017/03/27/14/21/cheese-2179759_1280.jpg"
+              image="https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop"
               index={2}
             />
           </div>
@@ -172,11 +191,15 @@ const Home = () => {
               whileHover={{ y: -5 }}
             >
               <motion.img
-                src="https://cdn.pixabay.com/photo/2016/10/27/17/50/farm-1775892_1280.jpg"
+                src="https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400&h=300&fit=crop"
                 alt="Sustainable farming practices"
                 className="w-full h-64 object-cover"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
+                onError={(e) => {
+                  e.currentTarget.src = "https://via.placeholder.com/400x300/22c55e/ffffff?text=Sustainable+Farming";
+                }}
+                loading="lazy"
               />
             </motion.div>
 
@@ -189,11 +212,15 @@ const Home = () => {
               whileHover={{ y: -5 }}
             >
               <motion.img
-                src="https://cdn.pixabay.com/photo/2020/06/20/17/36/wheat-5321890_1280.jpg"
+                src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=300&fit=crop"
                 alt="Organic crop fields"
                 className="w-full h-64 object-cover"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
+                onError={(e) => {
+                  e.currentTarget.src = "https://via.placeholder.com/400x300/22c55e/ffffff?text=Organic+Crops";
+                }}
+                loading="lazy"
               />
             </motion.div>
 
@@ -206,11 +233,15 @@ const Home = () => {
               whileHover={{ y: -5 }}
             >
               <motion.img
-                src="https://cdn.pixabay.com/photo/2020/05/14/19/36/tractor-5171589_1280.jpg"
+                src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400&h=300&fit=crop"
                 alt="Modern farming equipment"
                 className="w-full h-64 object-cover"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
+                onError={(e) => {
+                  e.currentTarget.src = "https://via.placeholder.com/400x300/22c55e/ffffff?text=Farm+Equipment";
+                }}
+                loading="lazy"
               />
             </motion.div>
           </div>

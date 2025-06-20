@@ -77,25 +77,31 @@ const AboutUsPage = () => {
       name: "Sarah Johnson",
       role: "Founder & CEO",
       bio: "Former farmer with 15 years of experience who recognized the need to connect local farms directly with consumers.",
-      image: "https://cdn.pixabay.com/photo/2019/11/03/22/40/woman-4599344_1280.jpg"
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face"
     },
     {
       name: "Michael Chen",
       role: "CTO",
       bio: "Tech expert passionate about using technology to solve real-world problems in agriculture and sustainability.",
-      image: "https://cdn.pixabay.com/photo/2017/01/14/10/56/people-1979262_1280.jpg"
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face"
     },
     {
       name: "Emily Rodriguez",
       role: "Head of Operations",
       bio: "Operations specialist with experience in logistics and supply chain management for agricultural products.",
-      image: "https://cdn.pixabay.com/photo/2018/01/15/07/51/woman-3083390_1280.jpg"
+      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face"
     },
     {
       name: "Marcus Williams",
       role: "Farmer Relations",
       bio: "Third-generation farmer who understands the challenges and needs of small-scale agricultural producers.",
-      image: "https://cdn.pixabay.com/photo/2019/11/04/12/56/man-4601006_1280.jpg"
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face"
+    },
+    {
+      name: "Dr. Priya Patel",
+      role: "Agricultural Scientist",
+      bio: "PhD in Agricultural Sciences with expertise in sustainable farming practices and crop optimization for small-scale farmers.",
+      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face"
     }
   ];
 
@@ -152,30 +158,30 @@ const AboutUsPage = () => {
           <div className="md:w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl overflow-hidden h-64">
-                <img 
-                  src="https://cdn.pixabay.com/photo/2020/07/02/16/13/house-5363177_1280.jpg" 
-                  alt="Farm field" 
+                <img
+                  src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop"
+                  alt="Farm field"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="rounded-xl overflow-hidden h-64">
-                <img 
-                  src="https://cdn.pixabay.com/photo/2022/06/28/23/12/farmer-7290247_1280.jpg" 
-                  alt="Farmer with produce" 
+                <img
+                  src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=300&fit=crop"
+                  alt="Farmer with produce"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="rounded-xl overflow-hidden h-64">
-                <img 
-                  src="https://cdn.pixabay.com/photo/2015/12/09/17/11/vegetables-1085063_1280.jpg" 
-                  alt="Fresh vegetables" 
+                <img
+                  src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop"
+                  alt="Fresh vegetables"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="rounded-xl overflow-hidden h-64">
-                <img 
-                  src="https://cdn.pixabay.com/photo/2020/06/06/13/09/farm-5266067_1280.jpg" 
-                  alt="Family farm" 
+                <img
+                  src="https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400&h=300&fit=crop"
+                  alt="Family farm"
                   className="w-full h-full object-cover"
                 />
               </div>

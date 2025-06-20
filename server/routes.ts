@@ -264,6 +264,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order/Checkout API endpoint
+  app.post("/api/orders", authenticate, async (req, res) => {
+    try {
+      const orderData = req.body;
+
+      // Validate required fields
+      if (!orderData.cartItems || !orderData.shippingInfo || !orderData.paymentMethod) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required order information"
+        });
+      }
+
+      // Calculate total
+      const subtotal = orderData.cartItems.reduce((total: number, item: any) => {
+        const price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+        return total + (price * item.quantity);
+      }, 0);
+
+      const tax = subtotal * 0.07;
+      const total = subtotal + tax;
+
+      // Create order object
+      const order = {
+        id: Date.now().toString(),
+        userId: req.user.id,
+        items: orderData.cartItems,
+        shippingInfo: orderData.shippingInfo,
+        paymentMethod: orderData.paymentMethod,
+        subtotal,
+        tax,
+        total,
+        status: 'confirmed',
+        createdAt: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+      };
+
+      // In a real app, you would save this to a database
+      // For now, we'll just return success
+
+      res.status(201).json({
+        success: true,
+        message: "Order placed successfully",
+        data: order
+      });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to place order"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

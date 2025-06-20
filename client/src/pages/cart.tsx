@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,20 +12,26 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { MinusIcon, PlusIcon, ShoppingCartIcon, TrashIcon } from 'lucide-react';
+import { MinusIcon, PlusIcon, ShoppingCartIcon, TrashIcon, Lock, UserPlus } from 'lucide-react';
 import { convertUsdToInr, formatINR } from "@/lib/utils";
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getTotalItems, getTotalPrice } = useCart();
+  const { isAuthenticated, user } = useAuth();
   const [location, navigate] = useLocation();
-  
+
   // Format the price in Indian Rupees
   const formatPrice = (price: number) => {
     return formatINR(convertUsdToInr(price));
   };
-  
+
   const handleCheckout = () => {
-    navigate('/checkout');
+    if (isAuthenticated) {
+      navigate('/checkout');
+    } else {
+      // Redirect to login page with return URL
+      navigate('/sign-in');
+    }
   };
   
   const handleRemoveItem = (id: number) => {
@@ -144,9 +151,26 @@ export default function Cart() {
             <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/shop">Continue Shopping</Link>
             </Button>
-            <Button className="w-full sm:w-auto" onClick={handleCheckout}>
-              Proceed to Checkout
-            </Button>
+            {isAuthenticated ? (
+              <Button className="w-full sm:w-auto" onClick={handleCheckout}>
+                Proceed to Checkout
+              </Button>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                  <Link href="/sign-in">
+                    <Lock className="h-4 w-4 mr-2" />
+                    Login to Checkout
+                  </Link>
+                </Button>
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href="/sign-up">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Sign Up
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </CardFooter>
       </Card>

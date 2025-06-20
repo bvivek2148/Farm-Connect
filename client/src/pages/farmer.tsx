@@ -1,9 +1,598 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Check, Award, TrendingUp, Users, Clock, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Check, Award, TrendingUp, Users, Clock, Truck, User, MapPin, Phone, Mail, Upload, Camera, Video } from "lucide-react";
 import { Link } from "wouter";
+
+// Form schema for farmer registration
+const farmerRegistrationSchema = z.object({
+  fullName: z.string().min(2, {
+    message: "Full name must be at least 2 characters long",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email address",
+  }),
+  phone: z.string().min(10, {
+    message: "Please enter a valid phone number",
+  }),
+  farmName: z.string().min(2, {
+    message: "Farm name must be at least 2 characters long",
+  }),
+  farmAddress: z.string().min(10, {
+    message: "Please enter a complete farm address",
+  }),
+  farmSize: z.string().min(1, {
+    message: "Please select your farm size",
+  }),
+  farmType: z.string().min(1, {
+    message: "Please select your farm type",
+  }),
+  yearsExperience: z.string().min(1, {
+    message: "Please select your years of experience",
+  }),
+  productsGrown: z.string().min(10, {
+    message: "Please describe the products you grow (minimum 10 characters)",
+  }),
+  farmingPractices: z.string().min(1, {
+    message: "Please select your farming practices",
+  }),
+  certifications: z.string().optional(),
+  farmerProofImage: z.any().refine(val => val !== null && val !== undefined, {
+    message: "Farmer proof image is required",
+  }),
+  farmAreaVideo: z.any().refine(val => val !== null && val !== undefined, {
+    message: "Farm area video is required",
+  }),
+  businessLicense: z.boolean().refine(val => val === true, {
+    message: "You must have a valid business license to join",
+  }),
+  agreeTerms: z.boolean().refine(val => val === true, {
+    message: "You must agree to the terms and conditions",
+  }),
+});
+
+type FarmerRegistrationFormValues = z.infer<typeof farmerRegistrationSchema>;
+
+// Farmer Registration Form Component
+const FarmerRegistrationForm = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [farmerImagePreview, setFarmerImagePreview] = useState<string | null>(null);
+  const [farmVideoPreview, setFarmVideoPreview] = useState<string | null>(null);
+
+  const form = useForm<FarmerRegistrationFormValues>({
+    resolver: zodResolver(farmerRegistrationSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      farmName: "",
+      farmAddress: "",
+      farmSize: "",
+      farmType: "",
+      yearsExperience: "",
+      productsGrown: "",
+      farmingPractices: "",
+      certifications: "",
+      farmerProofImage: null,
+      farmAreaVideo: null,
+      businessLicense: false,
+      agreeTerms: false,
+    },
+  });
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFarmerImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue("farmerProofImage", file);
+    }
+  };
+
+  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        toast({
+          title: "File too large",
+          description: "Please select a video smaller than 50MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFarmVideoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      form.setValue("farmAreaVideo", file);
+    }
+  };
+
+  function onSubmit(data: FarmerRegistrationFormValues) {
+    setIsSubmitting(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      toast({
+        title: "Application Submitted!",
+        description: "Thank you for your interest! We'll review your application and get back to you within 2-3 business days.",
+      });
+      setIsSubmitting(false);
+      form.reset();
+      setFarmerImagePreview(null);
+      setFarmVideoPreview(null);
+    }, 2000);
+  }
+
+  return (
+    <div className="bg-white py-16" id="farmer-registration">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Join as a Farmer</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Fill out the form below to start your journey with Farm Connect. Our team will review your application and get back to you soon.
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle>Farmer Registration Form</CardTitle>
+              <CardDescription>
+                Please provide accurate information about yourself and your farm
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Personal Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <User className="h-5 w-5 mr-2 text-primary" />
+                      Personal Information
+                    </h3>
+
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your full name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address *</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="your@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="(555) 123-4567" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Farm Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <MapPin className="h-5 w-5 mr-2 text-primary" />
+                      Farm Information
+                    </h3>
+
+                    <FormField
+                      control={form.control}
+                      name="farmName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Farm Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your farm name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="farmAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Farm Address *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter complete farm address including city, state, and zip code"
+                              className="min-h-[80px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="farmSize"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Farm Size *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select farm size" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="small">Small (Under 10 acres)</SelectItem>
+                                <SelectItem value="medium">Medium (10-50 acres)</SelectItem>
+                                <SelectItem value="large">Large (50-200 acres)</SelectItem>
+                                <SelectItem value="enterprise">Enterprise (200+ acres)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="farmType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Farm Type *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select farm type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="vegetables">Vegetable Farm</SelectItem>
+                                <SelectItem value="fruits">Fruit Farm/Orchard</SelectItem>
+                                <SelectItem value="dairy">Dairy Farm</SelectItem>
+                                <SelectItem value="livestock">Livestock/Ranch</SelectItem>
+                                <SelectItem value="grains">Grain Farm</SelectItem>
+                                <SelectItem value="mixed">Mixed/Diversified</SelectItem>
+                                <SelectItem value="specialty">Specialty Crops</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Experience and Products */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Experience & Products</h3>
+
+                    <FormField
+                      control={form.control}
+                      name="yearsExperience"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Years of Farming Experience *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select experience level" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0-2">0-2 years (New Farmer)</SelectItem>
+                              <SelectItem value="3-5">3-5 years</SelectItem>
+                              <SelectItem value="6-10">6-10 years</SelectItem>
+                              <SelectItem value="11-20">11-20 years</SelectItem>
+                              <SelectItem value="20+">20+ years (Veteran)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="productsGrown"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Products You Grow *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Describe the products you grow (e.g., tomatoes, lettuce, apples, grass-fed beef, etc.)"
+                              className="min-h-[100px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Please list the main products you grow and plan to sell through our platform
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="farmingPractices"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Farming Practices *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your farming practices" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="organic-certified">Certified Organic</SelectItem>
+                              <SelectItem value="organic-transitioning">Transitioning to Organic</SelectItem>
+                              <SelectItem value="sustainable">Sustainable/Natural</SelectItem>
+                              <SelectItem value="conventional">Conventional</SelectItem>
+                              <SelectItem value="regenerative">Regenerative Agriculture</SelectItem>
+                              <SelectItem value="biodynamic">Biodynamic</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="certifications"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Certifications (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., USDA Organic, GAP, Animal Welfare Approved, etc."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            List any relevant certifications your farm has
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Verification Documents */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <Camera className="h-5 w-5 mr-2 text-primary" />
+                      Verification Documents
+                    </h3>
+
+                    {/* Farmer Proof Image */}
+                    <FormField
+                      control={form.control}
+                      name="farmerProofImage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Farmer Proof Image *</FormLabel>
+                          <FormControl>
+                            <div className="space-y-4">
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleImageUpload}
+                                  className="hidden"
+                                  id="farmer-image-upload"
+                                />
+                                <label htmlFor="farmer-image-upload" className="cursor-pointer">
+                                  <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                  <p className="text-sm text-gray-600">
+                                    Click to upload farmer proof image
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    PNG, JPG up to 5MB
+                                  </p>
+                                </label>
+                              </div>
+
+                              {farmerImagePreview && (
+                                <div className="mt-4">
+                                  <img
+                                    src={farmerImagePreview}
+                                    alt="Farmer proof preview"
+                                    className="max-w-full h-48 object-cover rounded-lg border"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Upload a clear photo of yourself at your farm or with your farming equipment
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Farm Area Video */}
+                    <FormField
+                      control={form.control}
+                      name="farmAreaVideo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Farm Area Video *</FormLabel>
+                          <FormControl>
+                            <div className="space-y-4">
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                                <input
+                                  type="file"
+                                  accept="video/*"
+                                  onChange={handleVideoUpload}
+                                  className="hidden"
+                                  id="farm-video-upload"
+                                />
+                                <label htmlFor="farm-video-upload" className="cursor-pointer">
+                                  <Video className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                  <p className="text-sm text-gray-600">
+                                    Click to upload farm area video
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    MP4, MOV up to 50MB
+                                  </p>
+                                </label>
+                              </div>
+
+                              {farmVideoPreview && (
+                                <div className="mt-4">
+                                  <video
+                                    src={farmVideoPreview}
+                                    controls
+                                    className="max-w-full h-48 rounded-lg border"
+                                  >
+                                    Your browser does not support the video tag.
+                                  </video>
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Upload a short video (2-5 minutes) showing your farm area, crops, or livestock
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Legal Requirements */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Legal Requirements</h3>
+
+                    <FormField
+                      control={form.control}
+                      name="businessLicense"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              I have a valid business license for my farm operation *
+                            </FormLabel>
+                            <FormDescription>
+                              A valid business license is required to sell through our platform
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="agreeTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              I agree to the Terms of Service and Privacy Policy *
+                            </FormLabel>
+                            <FormDescription>
+                              By checking this box, you agree to our terms and conditions
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary/90"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Submitting Application..." : "Submit Application"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Benefit component with icon
 const Benefit = ({ icon: Icon, title, description }: {
@@ -96,7 +685,15 @@ const FarmerPage = () => {
               Join thousands of farmers who are increasing their profits by selling directly to local consumers through Farm Connect.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
+              <Button
+                size="lg"
+                className="bg-white text-primary hover:bg-gray-100"
+                onClick={() => {
+                  document.getElementById('farmer-registration')?.scrollIntoView({
+                    behavior: 'smooth'
+                  });
+                }}
+              >
                 Join as a Farmer
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/20">
@@ -241,7 +838,15 @@ const FarmerPage = () => {
             </div>
             
             <div className="mt-12 text-center">
-              <Button size="lg" className="bg-primary hover:bg-primary/90">
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  document.getElementById('farmer-registration')?.scrollIntoView({
+                    behavior: 'smooth'
+                  });
+                }}
+              >
                 Start Selling Today
               </Button>
             </div>
@@ -259,10 +864,10 @@ const FarmerPage = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <SuccessStory 
+          <SuccessStory
             title="Green Valley Organics"
             description="A small family farm that increased their customer base by 200% in just six months after joining Farm Connect."
-            image="https://cdn.pixabay.com/photo/2018/07/05/09/33/people-3518354_1280.jpg"
+            image="https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400&h=300&fit=crop"
             stats={[
               { label: "Revenue Increase", value: "78%" },
               { label: "New Customers", value: "320+" },
@@ -270,11 +875,11 @@ const FarmerPage = () => {
               { label: "Time Saved Weekly", value: "12 hrs" }
             ]}
           />
-          
-          <SuccessStory 
+
+          <SuccessStory
             title="Hillside Ranch"
             description="A medium-sized livestock farm that eliminated dependence on wholesalers by building a direct consumer base."
-            image="https://cdn.pixabay.com/photo/2019/06/22/14/42/horses-4291699_1280.jpg"
+            image="https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400&h=300&fit=crop"
             stats={[
               { label: "Profit Margin Increase", value: "32%" },
               { label: "Direct Customers", value: "180+" },
@@ -282,11 +887,11 @@ const FarmerPage = () => {
               { label: "Years with Farm Connect", value: "3" }
             ]}
           />
-          
-          <SuccessStory 
+
+          <SuccessStory
             title="Sunshine Orchard"
             description="An apple orchard that diversified their product offerings and built a year-round customer base despite a seasonal crop."
-            image="https://cdn.pixabay.com/photo/2021/07/05/09/25/apple-orchard-6389053_1280.jpg"
+            image="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=300&fit=crop"
             stats={[
               { label: "Off-Season Sales", value: "+125%" },
               { label: "Product Varieties", value: "15" },
@@ -308,25 +913,25 @@ const FarmerPage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Testimonial 
+            <Testimonial
               name="Robert Wilson"
               location="Wilson Family Farms, Oregon"
               quote="Farm Connect has completely changed how we do business. We've gone from struggling to sell through farmers markets to having a thriving direct business with customers who value our practices and products."
-              image="https://cdn.pixabay.com/photo/2017/11/02/14/26/farmer-2911382_1280.jpg"
+              image="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face"
             />
-            
-            <Testimonial 
+
+            <Testimonial
               name="Maria Sanchez"
               location="Sanchez Organics, California"
               quote="The platform is incredibly easy to use, even for someone like me who isn't tech-savvy. I can manage my listings, communicate with customers, and track orders all from my phone while working in the fields."
-              image="https://cdn.pixabay.com/photo/2018/03/16/16/43/woman-3231957_1280.jpg"
+              image="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face"
             />
-            
-            <Testimonial 
+
+            <Testimonial
               name="David Thompson"
               location="Morning Glory Farm, Vermont"
               quote="What I appreciate most is the direct relationship with customers. I know exactly what to harvest, when to harvest it, and for whom—virtually eliminating waste while maximizing our revenue."
-              image="https://cdn.pixabay.com/photo/2016/11/29/13/14/agriculture-1869993_1280.jpg"
+              image="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face"
             />
           </div>
         </div>
@@ -508,7 +1113,15 @@ const FarmerPage = () => {
             Join thousands of successful farmers who are thriving by connecting directly with consumers through Farm Connect.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-gray-100"
+              onClick={() => {
+                document.getElementById('farmer-registration')?.scrollIntoView({
+                  behavior: 'smooth'
+                });
+              }}
+            >
               Join as a Farmer
             </Button>
             <Link href="/contact">
@@ -519,7 +1132,10 @@ const FarmerPage = () => {
           </div>
         </div>
       </div>
-      
+
+      {/* Farmer Registration Form */}
+      <FarmerRegistrationForm />
+
       {/* FAQ section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">

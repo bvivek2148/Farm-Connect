@@ -3,8 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "wouter";
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { User, Lock, Mail, Facebook, Github, ArrowLeft } from "lucide-react";
+import { User, Lock, Mail, Facebook, Phone, ArrowLeft } from "lucide-react";
 
 // Form schema for validation
 const signUpSchema = z.object({
@@ -48,7 +47,8 @@ const SignUpPage = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const { signup, loginWithSocial } = useAuth();
+
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -59,37 +59,26 @@ const SignUpPage = () => {
       acceptTerms: false,
     },
   });
-  
-  const signUpMutation = useMutation({
-    mutationFn: async (data: Omit<SignUpFormValues, "confirmPassword" | "acceptTerms">) => {
-      const response = await apiRequest("POST", "/api/auth/signup", data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Success",
-        description: "Your account has been created successfully. Please sign in.",
-      });
-      setIsSubmitting(false);
-      // Redirect to sign in page
-      setLocation("/sign-in");
-    },
-    onError: (error: any) => {
-      console.error("Sign up error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create account. Please try again.",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-    },
-  });
-  
-  function onSubmit(data: SignUpFormValues) {
+
+  async function onSubmit(data: SignUpFormValues) {
     setIsSubmitting(true);
-    const { confirmPassword, acceptTerms, ...signUpData } = data;
-    signUpMutation.mutate(signUpData);
+
+    const success = await signup(data);
+
+    if (success) {
+      setLocation("/");
+    }
+
+    setIsSubmitting(false);
   }
+
+  const handleSocialSignup = async (provider: 'google' | 'facebook' | 'phone') => {
+    const success = await loginWithSocial(provider);
+
+    if (success) {
+      setLocation("/");
+    }
+  };
   
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -197,8 +186,8 @@ const SignUpPage = () => {
                     )}
                   />
                   
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
@@ -206,13 +195,49 @@ const SignUpPage = () => {
                   </Button>
                 </form>
               </Form>
+
+              <div className="mt-6 relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSocialSignup('google')}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Google
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSocialSignup('facebook')}
+                >
+                  <Facebook className="h-4 w-4 mr-2" />
+                  Facebook
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSocialSignup('phone')}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Phone
+                </Button>
+              </div>
             </CardContent>
             <CardFooter className="flex flex-col">
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link href="/sign-in">
                   <a className="text-primary font-medium hover:underline">
-                    Sign in
+                    Login
                   </a>
                 </Link>
               </div>

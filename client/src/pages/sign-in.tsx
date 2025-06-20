@@ -3,8 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "wouter";
@@ -18,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { User, Lock, Mail, Facebook, Github } from "lucide-react";
+import { User, Lock, Mail, Facebook, Phone } from "lucide-react";
 
 // Form schema for validation
 const signInSchema = z.object({
@@ -36,7 +35,8 @@ const SignInPage = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const { login, loginWithSocial } = useAuth();
+
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -44,69 +44,27 @@ const SignInPage = () => {
       password: "",
     },
   });
-  
-  const signInMutation = useMutation({
-    mutationFn: async (data: SignInFormValues) => {
-      // Check if admin credentials
-      if (data.username === 'admin' && data.password === '123456') {
-        // Store admin auth in session storage for admin portal
-        sessionStorage.setItem('adminAuth', 'true');
-        
-        // Return success response
-        return {
-          success: true,
-          user: {
-            username: 'admin',
-            role: 'admin'
-          }
-        };
-      }
-      
-      // Otherwise call the normal sign-in API
-      try {
-        const response = await apiRequest("POST", "/api/auth/signin", data);
-        return response.json();
-      } catch (error) {
-        // Mock success for demo purposes (remove in production)
-        return {
-          success: true,
-          user: {
-            username: data.username,
-            role: 'customer'
-          }
-        };
-      }
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Success",
-        description: "You have successfully signed in",
-      });
-      setIsSubmitting(false);
-      
-      // If admin user, redirect to admin dashboard
-      if (data.user?.role === 'admin') {
-        setLocation("/admin-dashboard");
-      } else {
-        // Otherwise redirect to home page
-        setLocation("/");
-      }
-    },
-    onError: (error: any) => {
-      console.error("Sign in error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in. Please check your credentials.",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-    },
-  });
-  
-  function onSubmit(data: SignInFormValues) {
+
+  async function onSubmit(data: SignInFormValues) {
     setIsSubmitting(true);
-    signInMutation.mutate(data);
+
+    const success = await login(data);
+
+    if (success) {
+      // Redirect based on user role (handled in AuthContext)
+      setLocation("/");
+    }
+
+    setIsSubmitting(false);
   }
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook' | 'phone') => {
+    const success = await loginWithSocial(provider);
+
+    if (success) {
+      setLocation("/");
+    }
+  };
   
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -114,7 +72,7 @@ const SignInPage = () => {
         <div className="max-w-md mx-auto">
           <Card>
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
+              <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
               <CardDescription className="text-center">
                 Enter your credentials to access your account
               </CardDescription>
@@ -179,12 +137,12 @@ const SignInPage = () => {
                     </Link>
                   </div>
                   
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Signing in..." : "Sign In"}
+                    {isSubmitting ? "Logging in..." : "Login"}
                   </Button>
                 </form>
               </Form>
@@ -199,17 +157,29 @@ const SignInPage = () => {
               </div>
               
               <div className="mt-6 grid grid-cols-3 gap-3">
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSocialLogin('google')}
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Google
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSocialLogin('facebook')}
+                >
                   <Facebook className="h-4 w-4 mr-2" />
                   Facebook
                 </Button>
-                <Button variant="outline" className="w-full">
-                  <Github className="h-4 w-4 mr-2" />
-                  GitHub
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSocialLogin('phone')}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Phone
                 </Button>
               </div>
             </CardContent>

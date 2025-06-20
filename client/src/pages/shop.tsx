@@ -24,7 +24,7 @@ const products = [
     category: "vegetables",
     price: 3.99,
     unit: "lb",
-    image: "https://cdn.pixabay.com/photo/2011/03/16/16/01/tomatoes-5356_1280.jpg",
+    image: "https://images.unsplash.com/photo-1546470427-e26264be0b0d?w=400&h=300&fit=crop",
     farmer: "Green Valley Farm",
     distance: 12,
     organic: true,
@@ -36,7 +36,7 @@ const products = [
     category: "fruits",
     price: 4.99,
     unit: "pint",
-    image: "https://cdn.pixabay.com/photo/2018/05/26/10/54/strawberries-3431122_1280.jpg",
+    image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=300&fit=crop",
     farmer: "Berry Fields",
     distance: 8,
     organic: true,
@@ -48,7 +48,7 @@ const products = [
     category: "dairy",
     price: 7.99,
     unit: "jar",
-    image: "https://cdn.pixabay.com/photo/2015/11/07/11/41/honey-1031057_1280.jpg",
+    image: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&h=300&fit=crop",
     farmer: "Sweet Meadows",
     distance: 15,
     organic: true,
@@ -60,7 +60,7 @@ const products = [
     category: "dairy",
     price: 5.49,
     unit: "dozen",
-    image: "https://cdn.pixabay.com/photo/2016/07/23/15/24/egg-1536990_1280.jpg",
+    image: "https://images.unsplash.com/photo-1518569656558-1f25e69d93d7?w=400&h=300&fit=crop",
     farmer: "Happy Hen Farm",
     distance: 10,
     organic: true,
@@ -72,7 +72,7 @@ const products = [
     category: "vegetables",
     price: 2.99,
     unit: "bunch",
-    image: "https://cdn.pixabay.com/photo/2018/01/10/21/46/kale-3074000_1280.jpg",
+    image: "https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?w=400&h=300&fit=crop",
     farmer: "Green Leaf Gardens",
     distance: 5,
     organic: true,
@@ -84,7 +84,7 @@ const products = [
     category: "dairy",
     price: 8.99,
     unit: "8 oz",
-    image: "https://cdn.pixabay.com/photo/2020/05/03/13/09/cheese-5125021_1280.jpg",
+    image: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&h=300&fit=crop",
     farmer: "Hillside Creamery",
     distance: 20,
     organic: false,
@@ -96,7 +96,7 @@ const products = [
     category: "fruits",
     price: 1.99,
     unit: "lb",
-    image: "https://cdn.pixabay.com/photo/2017/09/26/13/21/apples-2788599_1280.jpg",
+    image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop",
     farmer: "Orchard Hills",
     distance: 18,
     organic: true,
@@ -108,7 +108,7 @@ const products = [
     category: "meat",
     price: 12.99,
     unit: "lb",
-    image: "https://cdn.pixabay.com/photo/2016/03/05/19/23/meat-1238262_1280.jpg",
+    image: "https://images.unsplash.com/photo-1588347818133-38c4106ca7b4?w=400&h=300&fit=crop",
     farmer: "Greener Pastures",
     distance: 25,
     organic: true,
@@ -120,7 +120,7 @@ const products = [
     category: "vegetables",
     price: 2.49,
     unit: "bunch",
-    image: "https://cdn.pixabay.com/photo/2015/03/14/14/00/carrots-673184_1280.jpg",
+    image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?w=400&h=300&fit=crop",
     farmer: "Roots Farm",
     distance: 15,
     organic: true,
@@ -132,7 +132,7 @@ const products = [
     category: "bakery",
     price: 4.99,
     unit: "loaf",
-    image: "https://cdn.pixabay.com/photo/2016/07/11/18/42/bread-1510155_1280.jpg",
+    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop",
     farmer: "Stone Mill Bakery",
     distance: 8,
     organic: false,
@@ -144,7 +144,7 @@ const products = [
     category: "fruits",
     price: 5.99,
     unit: "pint",
-    image: "https://cdn.pixabay.com/photo/2016/04/13/07/18/blueberries-1326154_1280.jpg",
+    image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400&h=300&fit=crop",
     farmer: "Blue Sky Farms",
     distance: 12,
     organic: true,
@@ -156,7 +156,7 @@ const products = [
     category: "meat",
     price: 9.99,
     unit: "lb",
-    image: "https://cdn.pixabay.com/photo/2016/05/09/10/42/poultry-1381637_1280.jpg",
+    image: "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&h=300&fit=crop",
     farmer: "Freedom Range",
     distance: 22,
     organic: true,
@@ -169,13 +169,19 @@ const ProductCard = ({ product, onAddToCart }: {
   product: typeof products[0],
   onAddToCart: (product: typeof products[0]) => void
 }) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(product.name)}`;
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <div className="relative">
-        <img 
-          src={product.image} 
-          alt={product.name} 
-          className="w-full h-48 object-cover rounded-t-lg" 
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-48 object-cover rounded-t-lg"
+          onError={handleImageError}
+          loading="lazy"
         />
         {product.organic && (
           <Badge className="absolute top-2 right-2 bg-primary">Organic</Badge>

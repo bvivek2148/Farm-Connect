@@ -26,7 +26,7 @@ const ConnectingSection = () => {
               transition={{ duration: 0.3 }}
             >
               <motion.img
-                src="https://cdn.pixabay.com/photo/2017/10/09/19/29/eat-2834549_1280.jpg"
+                src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop"
                 alt="Colorful vegetables and fruits"
                 className="w-full h-full object-cover"
                 whileHover={{ scale: 1.1 }}

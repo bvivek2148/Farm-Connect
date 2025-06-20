@@ -11,6 +11,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { StatisticsProvider } from "@/context/StatisticsContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 // Lazy load pages for better performance
 const Shop = lazy(() => import("@/pages/shop"));
@@ -24,6 +25,8 @@ const SignIn = lazy(() => import("@/pages/sign-in"));
 const SignUp = lazy(() => import("@/pages/sign-up"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
 const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
+const Profile = lazy(() => import("@/pages/profile"));
+const Orders = lazy(() => import("@/pages/orders"));
 
 function Router() {
   return (
@@ -43,6 +46,8 @@ function Router() {
             <Route path="/checkout" component={Checkout} />
             <Route path="/sign-in" component={SignIn} />
             <Route path="/sign-up" component={SignUp} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/orders" component={Orders} />
             <Route path="/admin-login" component={AdminLogin} />
             <Route path="/admin-dashboard" component={AdminDashboard} />
             {/* Fallback to 404 */}
@@ -58,14 +63,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <StatisticsProvider>
-          <CartProvider>
-            <Toaster />
-            <Router />
-          </CartProvider>
-        </StatisticsProvider>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <StatisticsProvider>
+            <CartProvider>
+              <Toaster />
+              <Router />
+            </CartProvider>
+          </StatisticsProvider>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

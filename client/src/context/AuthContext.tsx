@@ -109,8 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('farmConnectUser', JSON.stringify(mockUser));
       
       toast({
-        title: "Success",
-        description: "Login successful",
+        title: "Welcome back! 🌱",
+        description: "Successfully logged in. Start exploring fresh, local products!",
       });
       
       return true;
@@ -142,8 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('farmConnectUser', JSON.stringify(mockUser));
       
       toast({
-        title: "Success",
-        description: `${provider.charAt(0).toUpperCase() + provider.slice(1)} login successful`,
+        title: `Welcome to Farm Connect! 🌱`,
+        description: `Successfully signed in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}. Start exploring fresh, local products!`,
       });
       
       return true;
@@ -175,8 +175,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('farmConnectUser', JSON.stringify(newUser));
       
       toast({
-        title: "Success",
-        description: "Account created successfully",
+        title: "Welcome to Farm Connect! 🎉",
+        description: "Your account has been created successfully. Start exploring fresh, local products!",
       });
       
       return true;

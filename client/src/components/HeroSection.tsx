@@ -138,7 +138,7 @@ const HeroSection = () => {
               }}
             >
               <motion.img
-                src="https://cdn.pixabay.com/photo/2016/08/11/08/04/vegetables-1584999_1280.jpg"
+                src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop"
                 alt="Fresh colorful fruits and vegetables"
                 className="w-full h-full object-cover"
                 initial={{ scale: 1.1 }}
