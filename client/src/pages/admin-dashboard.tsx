@@ -32,9 +32,50 @@ import {
   XCircle,
   Edit,
   Trash,
+  TrendingUp,
+  DollarSign,
+  Eye,
+  UserCheck,
+  Package,
+  Star,
+  AlertTriangle,
+  Clock,
+  Truck,
+  X,
+  Search,
+  Filter,
+  Download,
+  Bell,
+  Settings,
+  Activity,
+  Calendar,
+  MapPin,
+  Zap,
+  Shield,
+  Globe,
+  Smartphone,
+  Monitor,
+  RefreshCw,
+  MoreVertical,
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Wifi,
+  Database
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Sample data for demonstration
 const sampleUsers = [
@@ -65,14 +106,27 @@ const sampleOrders = [
   { id: 5, customer: 'Lisa Wong', items: 4, total: '$53.96', status: 'Processing', date: '2023-07-16' },
 ];
 
-// Statistics data
+// Enhanced Statistics data with trends
 const statistics = {
   totalUsers: 5842,
   activeUsers: 3127,
   totalFarms: 248,
   totalOrders: 15429,
   totalRevenue: 528947.89,
-  uniqueVisitors: 15749
+  uniqueVisitors: 15749,
+  // New metrics
+  monthlyGrowth: 12.5,
+  conversionRate: 3.2,
+  avgOrderValue: 34.28,
+  customerSatisfaction: 4.7,
+  systemUptime: 99.9,
+  activeConnections: 1247,
+  // Trends (percentage change)
+  usersTrend: 8.2,
+  farmsTrend: 15.3,
+  ordersTrend: -2.1,
+  revenueTrend: 22.7,
+  visitorsTrend: 5.8
 };
 
 const AdminDashboard = () => {
@@ -80,6 +134,15 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [isAuthorized, setIsAuthorized] = useState(false);
+
+  // Enhanced state management
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterRole, setFilterRole] = useState('all');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [notifications, setNotifications] = useState(3);
+  const [isOnline, setIsOnline] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Check if user is authorized to view admin dashboard
   useEffect(() => {
@@ -95,6 +158,28 @@ const AdminDashboard = () => {
       setIsAuthorized(true);
     }
   }, [navigate, toast]);
+
+  // Real-time clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Simulate online status monitoring
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   const handleLogout = () => {
     sessionStorage.removeItem('adminAuth');
@@ -104,6 +189,25 @@ const AdminDashboard = () => {
     });
     navigate('/admin-login');
   };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate data refresh
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setRefreshing(false);
+    toast({
+      title: 'Data refreshed',
+      description: 'Dashboard data has been updated',
+    });
+  };
+
+  const clearNotifications = () => {
+    setNotifications(0);
+    toast({
+      title: 'Notifications cleared',
+      description: 'All notifications have been marked as read',
+    });
+  };
   
   // If not authorized, don't render the dashboard
   if (!isAuthorized) {
@@ -111,85 +215,205 @@ const AdminDashboard = () => {
   }
   
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button variant="outline" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" /> Logout
-        </Button>
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 mb-8">
-          <TabsTrigger value="overview" className="flex items-center">
-            <BarChart className="h-4 w-4 mr-2" /> Overview
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center">
-            <Users className="h-4 w-4 mr-2" /> Users
-          </TabsTrigger>
-          <TabsTrigger value="products" className="flex items-center">
-            <Layers className="h-4 w-4 mr-2" /> Products
-          </TabsTrigger>
-          <TabsTrigger value="orders" className="flex items-center">
-            <ShoppingBag className="h-4 w-4 mr-2" /> Orders
-          </TabsTrigger>
-        </TabsList>
-        
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Total Users</CardTitle>
-                <CardDescription>Registered customers and farmers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{statistics.totalUsers.toLocaleString()}</div>
-                <p className="text-sm text-gray-500 mt-2">
-                  <span className="text-primary font-medium">{statistics.activeUsers.toLocaleString()}</span> active users
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Total Farms</CardTitle>
-                <CardDescription>Registered farm partners</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{statistics.totalFarms.toLocaleString()}</div>
-                <p className="text-sm text-gray-500 mt-2">
-                  <span className="text-primary font-medium">+12</span> new this month
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Total Revenue</CardTitle>
-                <CardDescription>All time sales</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">${statistics.totalRevenue.toLocaleString()}</div>
-                <p className="text-sm text-gray-500 mt-2">
-                  <span className="text-primary font-medium">{statistics.totalOrders.toLocaleString()}</span> orders processed
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Unique Visitors</CardTitle>
-                <CardDescription>Total unique site visitors</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{statistics.uniqueVisitors.toLocaleString()}</div>
-                <p className="text-sm text-gray-500 mt-2">
-                  <span className="text-primary font-medium">+324</span> this week
-                </p>
-              </CardContent>
-            </Card>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Enhanced Header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-800">Farm Connect Admin</h1>
+                  <p className="text-sm text-slate-500">Management Dashboard</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              {/* Real-time clock */}
+              <div className="hidden md:flex items-center space-x-2 text-sm text-slate-600">
+                <Clock className="h-4 w-4" />
+                <span>{currentTime.toLocaleTimeString()}</span>
+              </div>
+
+              {/* System status */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-sm text-slate-600">{isOnline ? 'Online' : 'Offline'}</span>
+              </div>
+
+              {/* Notifications */}
+              <Button variant="ghost" size="icon" onClick={clearNotifications} className="relative">
+                <Bell className="h-5 w-5" />
+                {notifications > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {notifications}
+                  </span>
+                )}
+              </Button>
+
+              {/* Refresh button */}
+              <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={refreshing}>
+                <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+
+              {/* Settings */}
+              <Button variant="ghost" size="icon">
+                <Settings className="h-5 w-5" />
+              </Button>
+
+              {/* Logout */}
+              <Button variant="outline" onClick={handleLogout} className="ml-2">
+                <LogOut className="h-4 w-4 mr-2" /> Logout
+              </Button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto py-6 px-4">
+      
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-6">
+            <TabsList className="grid grid-cols-6 w-full h-auto p-2 bg-transparent">
+              <TabsTrigger value="overview" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                <BarChart className="h-4 w-4 mr-2" /> Overview
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                <Activity className="h-4 w-4 mr-2" /> Analytics
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                <Users className="h-4 w-4 mr-2" /> Users
+              </TabsTrigger>
+              <TabsTrigger value="products" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                <Layers className="h-4 w-4 mr-2" /> Products
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                <ShoppingBag className="h-4 w-4 mr-2" /> Orders
+              </TabsTrigger>
+              <TabsTrigger value="system" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+                <Database className="h-4 w-4 mr-2" /> System
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        
+          {/* Enhanced Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Key Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg text-blue-800">Total Users</CardTitle>
+                      <CardDescription className="text-blue-600">Registered customers and farmers</CardDescription>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-blue-800">{statistics.totalUsers.toLocaleString()}</div>
+                  <div className="flex items-center mt-2">
+                    <div className={`flex items-center ${statistics.usersTrend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {statistics.usersTrend > 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      <span className="text-sm font-medium">{Math.abs(statistics.usersTrend)}%</span>
+                    </div>
+                    <span className="text-sm text-blue-600 ml-2">vs last month</span>
+                  </div>
+                  <Progress value={(statistics.activeUsers / statistics.totalUsers) * 100} className="mt-3" />
+                  <p className="text-xs text-blue-600 mt-1">{statistics.activeUsers.toLocaleString()} active users</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg text-green-800">Total Farms</CardTitle>
+                      <CardDescription className="text-green-600">Registered farm partners</CardDescription>
+                    </div>
+                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                      <MapPin className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-800">{statistics.totalFarms.toLocaleString()}</div>
+                  <div className="flex items-center mt-2">
+                    <div className={`flex items-center ${statistics.farmsTrend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {statistics.farmsTrend > 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      <span className="text-sm font-medium">{Math.abs(statistics.farmsTrend)}%</span>
+                    </div>
+                    <span className="text-sm text-green-600 ml-2">vs last month</span>
+                  </div>
+                  <div className="mt-3 flex items-center">
+                    <Zap className="h-4 w-4 text-green-600 mr-1" />
+                    <span className="text-sm text-green-600">12 new this month</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg text-purple-800">Total Revenue</CardTitle>
+                      <CardDescription className="text-purple-600">All time sales</CardDescription>
+                    </div>
+                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                      <DollarSign className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-purple-800">${statistics.totalRevenue.toLocaleString()}</div>
+                  <div className="flex items-center mt-2">
+                    <div className={`flex items-center ${statistics.revenueTrend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {statistics.revenueTrend > 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      <span className="text-sm font-medium">{Math.abs(statistics.revenueTrend)}%</span>
+                    </div>
+                    <span className="text-sm text-purple-600 ml-2">vs last month</span>
+                  </div>
+                  <div className="mt-3 flex items-center">
+                    <Target className="h-4 w-4 text-purple-600 mr-1" />
+                    <span className="text-sm text-purple-600">${statistics.avgOrderValue} avg order</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg text-orange-800">System Health</CardTitle>
+                      <CardDescription className="text-orange-600">Uptime & Performance</CardDescription>
+                    </div>
+                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Activity className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-orange-800">{statistics.systemUptime}%</div>
+                  <div className="flex items-center mt-2">
+                    <div className="flex items-center text-green-600">
+                      <Wifi className="h-4 w-4" />
+                      <span className="text-sm font-medium ml-1">Excellent</span>
+                    </div>
+                    <span className="text-sm text-orange-600 ml-2">uptime</span>
+                  </div>
+                  <div className="mt-3 flex items-center">
+                    <Globe className="h-4 w-4 text-orange-600 mr-1" />
+                    <span className="text-sm text-orange-600">{statistics.activeConnections} active connections</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           
           <Card>
             <CardHeader>
@@ -234,15 +458,185 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
-        {/* Users Tab */}
+
+        {/* New Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Performance Metrics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Performance Metrics
+                </CardTitle>
+                <CardDescription>Key performance indicators</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Conversion Rate</span>
+                    <span className="text-sm text-green-600 font-semibold">{statistics.conversionRate}%</span>
+                  </div>
+                  <Progress value={statistics.conversionRate * 10} className="h-2" />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Customer Satisfaction</span>
+                    <span className="text-sm text-green-600 font-semibold">{statistics.customerSatisfaction}/5.0</span>
+                  </div>
+                  <Progress value={statistics.customerSatisfaction * 20} className="h-2" />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Monthly Growth</span>
+                    <span className="text-sm text-green-600 font-semibold">{statistics.monthlyGrowth}%</span>
+                  </div>
+                  <Progress value={statistics.monthlyGrowth * 4} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Real-time Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="h-5 w-5 mr-2" />
+                  Real-time Activity
+                </CardTitle>
+                <CardDescription>Live system activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-3"></div>
+                      <span className="text-sm">Active Users Online</span>
+                    </div>
+                    <span className="font-semibold text-blue-600">{statistics.activeConnections}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></div>
+                      <span className="text-sm">Orders Today</span>
+                    </div>
+                    <span className="font-semibold text-green-600">47</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse mr-3"></div>
+                      <span className="text-sm">Revenue Today</span>
+                    </div>
+                    <span className="font-semibold text-purple-600">$1,247</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse mr-3"></div>
+                      <span className="text-sm">New Signups</span>
+                    </div>
+                    <span className="font-semibold text-orange-600">12</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Device Analytics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Monitor className="h-5 w-5 mr-2" />
+                Device Analytics
+              </CardTitle>
+              <CardDescription>User device breakdown</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Monitor className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <div className="text-2xl font-bold">62%</div>
+                  <div className="text-sm text-gray-600">Desktop</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Smartphone className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div className="text-2xl font-bold">34%</div>
+                  <div className="text-sm text-gray-600">Mobile</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Package className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <div className="text-2xl font-bold">4%</div>
+                  <div className="text-sm text-gray-600">Tablet</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Enhanced Users Tab */}
         <TabsContent value="users">
           <Card>
             <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Manage customers and farmers</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>User Management</CardTitle>
+                  <CardDescription>Manage customers and farmers</CardDescription>
+                </div>
+                <Button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add User
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
+              {/* Search and Filter Controls */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search users..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={filterRole} onValueChange={setFilterRole}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="farmer">Farmer</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="icon">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -404,6 +798,150 @@ const AdminDashboard = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* New System Tab */}
+        <TabsContent value="system" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* System Health */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2" />
+                  System Health
+                </CardTitle>
+                <CardDescription>Real-time system monitoring</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                    <div>
+                      <div className="font-medium">Server Status</div>
+                      <div className="text-sm text-gray-600">All systems operational</div>
+                    </div>
+                  </div>
+                  <Badge variant="default" className="bg-green-500">Online</Badge>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">CPU Usage</span>
+                    <span className="text-sm text-blue-600 font-semibold">23%</span>
+                  </div>
+                  <Progress value={23} className="h-2" />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Memory Usage</span>
+                    <span className="text-sm text-orange-600 font-semibold">67%</span>
+                  </div>
+                  <Progress value={67} className="h-2" />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Disk Usage</span>
+                    <span className="text-sm text-green-600 font-semibold">45%</span>
+                  </div>
+                  <Progress value={45} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Security & Logs */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Security & Logs
+                </CardTitle>
+                <CardDescription>Security events and system logs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
+                      <span className="text-sm">Failed login attempts</span>
+                    </div>
+                    <span className="font-semibold text-yellow-600">3</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center">
+                      <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                      <span className="text-sm">Successful logins</span>
+                    </div>
+                    <span className="font-semibold text-green-600">247</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center">
+                      <Database className="h-4 w-4 text-blue-600 mr-2" />
+                      <span className="text-sm">Database queries</span>
+                    </div>
+                    <span className="font-semibold text-blue-600">1,247</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center">
+                      <Globe className="h-4 w-4 text-purple-600 mr-2" />
+                      <span className="text-sm">API requests</span>
+                    </div>
+                    <span className="font-semibold text-purple-600">5,432</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* System Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                System Configuration
+              </CardTitle>
+              <CardDescription>Manage system settings and configurations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="text-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <Database className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="font-medium">Database</div>
+                  <div className="text-sm text-gray-600">Manage database settings</div>
+                </div>
+
+                <div className="text-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <Shield className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="font-medium">Security</div>
+                  <div className="text-sm text-gray-600">Security configurations</div>
+                </div>
+
+                <div className="text-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <Globe className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="font-medium">API</div>
+                  <div className="text-sm text-gray-600">API configurations</div>
+                </div>
+
+                <div className="text-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <Bell className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="font-medium">Notifications</div>
+                  <div className="text-sm text-gray-600">Notification settings</div>
+                </div>
               </div>
             </CardContent>
           </Card>

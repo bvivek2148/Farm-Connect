@@ -18,16 +18,16 @@ const TeamMember = ({ name, role, bio, image }: {
 }) => {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
-        <img 
-          src={image} 
-          alt={name} 
+      <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
+        <img
+          src={image}
+          alt={name}
           className="w-full h-full object-cover"
         />
       </div>
-      <h3 className="text-lg font-semibold">{name}</h3>
-      <p className="text-primary font-medium text-sm mb-2">{role}</p>
-      <p className="text-gray-600 text-sm">{bio}</p>
+      <h3 className="text-base font-semibold">{name}</h3>
+      <p className="text-primary font-medium text-xs mb-2">{role}</p>
+      <p className="text-gray-600 text-xs leading-relaxed">{bio}</p>
     </div>
   );
 };
@@ -283,7 +283,7 @@ const AboutUsPage = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-10 text-center">Our Team</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 max-w-6xl mx-auto">
             {teamMembers.map((member, index) => (
               <TeamMember key={index} {...member} />
             ))}

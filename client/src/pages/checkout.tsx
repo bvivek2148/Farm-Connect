@@ -392,60 +392,50 @@ export default function Checkout() {
                                 setSelectedPaymentMethod(value);
                               }}
                               defaultValue={field.value}
-                              className="space-y-3"
+                              className="grid grid-cols-1 md:grid-cols-5 gap-3"
                             >
-                              <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50">
-                                <RadioGroupItem value="card" id="card" />
-                                <Label htmlFor="card" className="flex items-center cursor-pointer flex-1">
-                                  <CreditCard className="h-5 w-5 mr-3 text-blue-600" />
-                                  <div>
-                                    <div className="font-medium">Credit/Debit Card</div>
-                                    <div className="text-sm text-gray-500">Visa, Mastercard, American Express</div>
-                                  </div>
+                              <div className="flex flex-col items-center space-y-2 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                                <RadioGroupItem value="card" id="card" className="sr-only" />
+                                <Label htmlFor="card" className="flex flex-col items-center cursor-pointer text-center w-full">
+                                  <CreditCard className="h-8 w-8 mb-2 text-blue-600" />
+                                  <div className="font-medium text-sm">Credit/Debit Card</div>
+                                  <div className="text-xs text-gray-500">Visa, Mastercard</div>
                                 </Label>
                               </div>
 
-                              <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50">
-                                <RadioGroupItem value="upi" id="upi" />
-                                <Label htmlFor="upi" className="flex items-center cursor-pointer flex-1">
-                                  <Smartphone className="h-5 w-5 mr-3 text-green-600" />
-                                  <div>
-                                    <div className="font-medium">UPI Payment</div>
-                                    <div className="text-sm text-gray-500">PhonePe, Google Pay, Paytm</div>
-                                  </div>
+                              <div className="flex flex-col items-center space-y-2 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                                <RadioGroupItem value="upi" id="upi" className="sr-only" />
+                                <Label htmlFor="upi" className="flex flex-col items-center cursor-pointer text-center w-full">
+                                  <Smartphone className="h-8 w-8 mb-2 text-green-600" />
+                                  <div className="font-medium text-sm">UPI Payment</div>
+                                  <div className="text-xs text-gray-500">PhonePe, GPay</div>
                                 </Label>
                               </div>
 
-                              <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50">
-                                <RadioGroupItem value="wallet" id="wallet" />
-                                <Label htmlFor="wallet" className="flex items-center cursor-pointer flex-1">
-                                  <Wallet className="h-5 w-5 mr-3 text-purple-600" />
-                                  <div>
-                                    <div className="font-medium">Digital Wallet</div>
-                                    <div className="text-sm text-gray-500">Paytm, Amazon Pay, Mobikwik</div>
-                                  </div>
+                              <div className="flex flex-col items-center space-y-2 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                                <RadioGroupItem value="wallet" id="wallet" className="sr-only" />
+                                <Label htmlFor="wallet" className="flex flex-col items-center cursor-pointer text-center w-full">
+                                  <Wallet className="h-8 w-8 mb-2 text-purple-600" />
+                                  <div className="font-medium text-sm">Digital Wallet</div>
+                                  <div className="text-xs text-gray-500">Paytm, Amazon Pay</div>
                                 </Label>
                               </div>
 
-                              <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50">
-                                <RadioGroupItem value="netbanking" id="netbanking" />
-                                <Label htmlFor="netbanking" className="flex items-center cursor-pointer flex-1">
-                                  <Building className="h-5 w-5 mr-3 text-orange-600" />
-                                  <div>
-                                    <div className="font-medium">Net Banking</div>
-                                    <div className="text-sm text-gray-500">All major banks supported</div>
-                                  </div>
+                              <div className="flex flex-col items-center space-y-2 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                                <RadioGroupItem value="netbanking" id="netbanking" className="sr-only" />
+                                <Label htmlFor="netbanking" className="flex flex-col items-center cursor-pointer text-center w-full">
+                                  <Building className="h-8 w-8 mb-2 text-orange-600" />
+                                  <div className="font-medium text-sm">Net Banking</div>
+                                  <div className="text-xs text-gray-500">All major banks</div>
                                 </Label>
                               </div>
 
-                              <div className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50">
-                                <RadioGroupItem value="cod" id="cod" />
-                                <Label htmlFor="cod" className="flex items-center cursor-pointer flex-1">
-                                  <ShoppingBag className="h-5 w-5 mr-3 text-green-600" />
-                                  <div>
-                                    <div className="font-medium">Cash on Delivery</div>
-                                    <div className="text-sm text-gray-500">Pay when you receive your order</div>
-                                  </div>
+                              <div className="flex flex-col items-center space-y-2 border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                                <RadioGroupItem value="cod" id="cod" className="sr-only" />
+                                <Label htmlFor="cod" className="flex flex-col items-center cursor-pointer text-center w-full">
+                                  <ShoppingBag className="h-8 w-8 mb-2 text-green-600" />
+                                  <div className="font-medium text-sm">Cash on Delivery</div>
+                                  <div className="text-xs text-gray-500">Pay on delivery</div>
                                 </Label>
                               </div>
                             </RadioGroup>
