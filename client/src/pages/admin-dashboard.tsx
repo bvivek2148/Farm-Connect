@@ -115,6 +115,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import NotificationPanel from '@/components/NotificationPanel';
 
 // Sample data for demonstration
 const sampleUsers = [
@@ -179,7 +180,7 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterRole, setFilterRole] = useState('all');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [notifications, setNotifications] = useState(3);
+  const [notificationCount, setNotificationCount] = useState(3);
   const [isOnline, setIsOnline] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -307,12 +308,8 @@ const AdminDashboard = () => {
     });
   };
 
-  const clearNotifications = () => {
-    setNotifications(0);
-    toast({
-      title: 'Notifications cleared',
-      description: 'All notifications have been marked as read',
-    });
+  const handleNotificationCountChange = (count: number) => {
+    setNotificationCount(count);
   };
 
   // Enhanced User Management Functions
@@ -511,14 +508,16 @@ const AdminDashboard = () => {
               </div>
 
               {/* Notifications */}
-              <Button variant="ghost" size="icon" onClick={clearNotifications} className="relative">
-                <Bell className="h-5 w-5" />
-                {notifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notifications}
-                  </span>
-                )}
-              </Button>
+              <NotificationPanel onNotificationCountChange={handleNotificationCountChange}>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </Button>
+              </NotificationPanel>
 
               {/* Refresh button */}
               <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={refreshing}>
