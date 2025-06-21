@@ -22,8 +22,16 @@
       "dest": "/server/index.ts"
     },
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|xml))",
       "dest": "/dist/public/$1"
+    },
+    {
+      "src": "/admin-login",
+      "dest": "/dist/public/index.html"
+    },
+    {
+      "src": "/admin-dashboard",
+      "dest": "/dist/public/index.html"
     },
     {
       "src": "/(.*)",
@@ -32,5 +40,10 @@
   ],
   "env": {
     "NODE_ENV": "production"
+  },
+  "functions": {
+    "server/index.ts": {
+      "maxDuration": 30
+    }
   }
 }
