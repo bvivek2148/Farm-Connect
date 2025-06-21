@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #007bff;
+            font-weight: bold;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .credentials {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Farm Connect Admin Test Page</h1>
+        <p>This page helps test the admin functionality locally and on deployment.</p>
+        
+        <div class="credentials">
+            <h3>📋 Admin Credentials</h3>
+            <p><strong>Username:</strong> admin</p>
+            <p><strong>Password:</strong> 123456</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 URL Tests</h3>
+            <p>Test these URLs in your browser:</p>
+            <ul>
+                <li><strong>Local Admin Login:</strong> <a href="http://localhost:5000/admin-login" target="_blank">http://localhost:5000/admin-login</a></li>
+                <li><strong>Local Admin Dashboard:</strong> <a href="http://localhost:5000/admin-dashboard" target="_blank">http://localhost:5000/admin-dashboard</a></li>
+                <li><strong>Production Admin Login:</strong> <a href="https://farm-connect-aecvk58jc-vivek-bukkas-projects.vercel.app/admin-login" target="_blank">https://farm-connect-aecvk58jc-vivek-bukkas-projects.vercel.app/admin-login</a></li>
+                <li><strong>Production Admin Dashboard:</strong> <a href="https://farm-connect-aecvk58jc-vivek-bukkas-projects.vercel.app/admin-dashboard" target="_blank">https://farm-connect-aecvk58jc-vivek-bukkas-projects.vercel.app/admin-dashboard</a></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Session Storage Test</h3>
+            <p>Test admin authentication storage:</p>
+            <button onclick="setAdminAuth()">Set Admin Auth</button>
+            <button onclick="clearAdminAuth()">Clear Admin Auth</button>
+            <button onclick="checkAdminAuth()">Check Admin Auth</button>
+            <div id="authStatus" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Build Verification</h3>
+            <p>Verify that the build files exist:</p>
+            <button onclick="checkBuildFiles()">Check Build Files</button>
+            <div id="buildStatus" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Deployment Checklist</h3>
+            <ul>
+                <li>✅ Updated vercel.json for SPA routing</li>
+                <li>✅ Improved admin login with validation</li>
+                <li>✅ Enhanced admin dashboard authentication</li>
+                <li>✅ Added session storage management</li>
+                <li>✅ Built application successfully</li>
+                <li>🔄 Deploy to Vercel (push changes to repository)</li>
+                <li>🔄 Test production URLs</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🐛 Troubleshooting</h3>
+            <p><strong>If admin page still shows 404:</strong></p>
+            <ol>
+                <li>Ensure you've pushed the updated vercel.json to your repository</li>
+                <li>Trigger a new deployment in Vercel dashboard</li>
+                <li>Clear browser cache and try again</li>
+                <li>Check browser console for any JavaScript errors</li>
+                <li>Verify the build files are properly generated</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function setAdminAuth() {
+            sessionStorage.setItem('adminAuth', 'true');
+            sessionStorage.setItem('adminUser', JSON.stringify({
+                id: 'admin',
+                username: 'admin',
+                email: 'admin@farmconnect.com',
+                role: 'admin'
+            }));
+            document.getElementById('authStatus').innerHTML = '<span class="success">✅ Admin auth set successfully!</span>';
+        }
+
+        function clearAdminAuth() {
+            sessionStorage.removeItem('adminAuth');
+            sessionStorage.removeItem('adminUser');
+            document.getElementById('authStatus').innerHTML = '<span class="info">🗑️ Admin auth cleared!</span>';
+        }
+
+        function checkAdminAuth() {
+            const adminAuth = sessionStorage.getItem('adminAuth');
+            const adminUser = sessionStorage.getItem('adminUser');
+            
+            let status = '';
+            if (adminAuth === 'true') {
+                status += '<span class="success">✅ Admin auth: ' + adminAuth + '</span><br>';
+                if (adminUser) {
+                    try {
+                        const userData = JSON.parse(adminUser);
+                        status += '<span class="success">✅ Admin user: ' + userData.username + ' (' + userData.role + ')</span>';
+                    } catch (e) {
+                        status += '<span class="error">❌ Invalid admin user data</span>';
+                    }
+                } else {
+                    status += '<span class="error">❌ No admin user data</span>';
+                }
+            } else {
+                status = '<span class="error">❌ No admin auth found</span>';
+            }
+            
+            document.getElementById('authStatus').innerHTML = status;
+        }
+
+        function checkBuildFiles() {
+            const buildFiles = [
+                '/dist/public/index.html',
+                '/dist/public/assets/',
+                '/dist/index.js'
+            ];
+            
+            let status = '<p><strong>Expected build files:</strong></p><ul>';
+            buildFiles.forEach(file => {
+                status += '<li>' + file + '</li>';
+            });
+            status += '</ul><p class="info">💡 Check these files exist in your project directory</p>';
+            
+            document.getElementById('buildStatus').innerHTML = status;
+        }
+
+        // Auto-check auth status on page load
+        window.onload = function() {
+            checkAdminAuth();
+        };
+    </script>
+</body>
+</html>

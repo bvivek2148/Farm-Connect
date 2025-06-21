@@ -215,17 +215,47 @@ const AdminDashboard = () => {
   
   // Check if user is authorized to view admin dashboard
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('adminAuth');
-    if (adminAuth !== 'true') {
-      toast({
-        title: 'Access denied',
-        description: 'You must be logged in as an administrator',
-        variant: 'destructive',
-      });
-      navigate('/admin-login');
-    } else {
-      setIsAuthorized(true);
-    }
+    const checkAdminAuth = () => {
+      try {
+        const adminAuth = sessionStorage.getItem('adminAuth');
+        const adminUser = sessionStorage.getItem('adminUser');
+
+        console.log('Admin auth check:', { adminAuth, adminUser });
+
+        if (adminAuth !== 'true') {
+          toast({
+            title: 'Access denied',
+            description: 'You must be logged in as an administrator',
+            variant: 'destructive',
+          });
+          navigate('/admin-login');
+          return;
+        }
+
+        // Additional validation for admin user data
+        if (adminUser) {
+          try {
+            const userData = JSON.parse(adminUser);
+            if (userData.role !== 'admin') {
+              throw new Error('Invalid admin role');
+            }
+          } catch (error) {
+            console.error('Invalid admin user data:', error);
+            sessionStorage.removeItem('adminAuth');
+            sessionStorage.removeItem('adminUser');
+            navigate('/admin-login');
+            return;
+          }
+        }
+
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Admin auth check error:', error);
+        navigate('/admin-login');
+      }
+    };
+
+    checkAdminAuth();
   }, [navigate, toast]);
 
   // Real-time clock
@@ -251,12 +281,19 @@ const AdminDashboard = () => {
   }, []);
   
   const handleLogout = () => {
+    // Clear all admin-related session data
     sessionStorage.removeItem('adminAuth');
+    sessionStorage.removeItem('adminUser');
+
     toast({
       title: 'Logged out',
       description: 'You have been logged out of the admin portal',
     });
-    navigate('/admin-login');
+
+    // Small delay to show the message before redirecting
+    setTimeout(() => {
+      navigate('/admin-login');
+    }, 500);
   };
 
   const handleRefresh = async () => {
