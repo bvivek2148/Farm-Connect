@@ -98,21 +98,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // For demo purposes, simulate successful login for any other credentials
+      // Check if username contains 'farmer' to assign farmer role
+      const role = credentials.username.toLowerCase().includes('farmer') ? 'farmer' : 'customer';
+
       const mockUser: User = {
         id: Date.now().toString(),
         username: credentials.username,
         email: `${credentials.username}@example.com`,
-        role: 'customer'
+        role: role
       };
       
       setUser(mockUser);
       localStorage.setItem('farmConnectUser', JSON.stringify(mockUser));
-      
+
+      // Also store user in a way admin can access (with username as key)
+      const userKey = `farmConnectUser_${credentials.username}`;
+      const userDataForAdmin = {
+        ...mockUser,
+        status: 'active',
+        joinDate: new Date().toISOString().split('T')[0]
+      };
+      localStorage.setItem(userKey, JSON.stringify(userDataForAdmin));
+
       toast({
         title: "Welcome back! 🌱",
-        description: "Successfully logged in. Start exploring fresh, local products!",
+        description: `Successfully logged in as ${role}. Start exploring fresh, local products!`,
       });
-      
+
       return true;
     } catch (error) {
       toast({
@@ -162,23 +174,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (userData: SignupData): Promise<boolean> => {
     try {
       setIsLoading(true);
-      
+
+      // Check if username contains 'farmer' to assign farmer role
+      const role = userData.username.toLowerCase().includes('farmer') ? 'farmer' : 'customer';
+
       // Simulate signup process
       const newUser: User = {
         id: Date.now().toString(),
         username: userData.username,
         email: userData.email,
-        role: 'customer'
+        role: role
       };
-      
+
       setUser(newUser);
       localStorage.setItem('farmConnectUser', JSON.stringify(newUser));
-      
+
+      // Also store user in a way admin can access (with username as key)
+      const userKey = `farmConnectUser_${userData.username}`;
+      const userDataForAdmin = {
+        ...newUser,
+        status: 'active',
+        joinDate: new Date().toISOString().split('T')[0]
+      };
+      localStorage.setItem(userKey, JSON.stringify(userDataForAdmin));
+
       toast({
         title: "Welcome to Farm Connect! 🎉",
-        description: "Your account has been created successfully. Start exploring fresh, local products!",
+        description: `Your account has been created successfully as a ${role}. Start exploring fresh, local products!`,
       });
-      
+
       return true;
     } catch (error) {
       toast({

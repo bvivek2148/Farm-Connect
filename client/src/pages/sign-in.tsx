@@ -51,8 +51,16 @@ const SignInPage = () => {
     const success = await login(data);
 
     if (success) {
-      // Redirect based on user role (handled in AuthContext)
-      setLocation("/");
+      // Check if admin credentials
+      if (data.username === 'admin' && data.password === '123456') {
+        setLocation("/admin-dashboard");
+      } else if (data.username.toLowerCase().includes('farmer')) {
+        // Redirect farmers to farmer dashboard
+        setLocation("/farmer-dashboard");
+      } else {
+        // Redirect customers to home page
+        setLocation("/");
+      }
     }
 
     setIsSubmitting(false);
@@ -76,6 +84,12 @@ const SignInPage = () => {
               <CardDescription className="text-center">
                 Enter your credentials to access your account
               </CardDescription>
+              <div className="text-xs text-center text-gray-500 mt-2 p-2 bg-blue-50 rounded">
+                <strong>Demo accounts:</strong><br />
+                Admin: admin / 123456<br />
+                Farmer: farmer123 / any password<br />
+                Customer: any other username / any password
+              </div>
             </CardHeader>
             <CardContent>
               <Form {...form}>
