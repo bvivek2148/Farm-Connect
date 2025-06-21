@@ -23,6 +23,34 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   BarChart,
   Users,
   ShoppingBag,
@@ -62,13 +90,24 @@ import {
   ArrowDownRight,
   Target,
   Wifi,
-  Database
+  Database,
+  Save,
+  Mail,
+  Phone,
+  User,
+  Building,
+  CreditCard,
+  FileText,
+  BarChart3,
+  PieChart,
+  TrendingDown
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -143,6 +182,36 @@ const AdminDashboard = () => {
   const [notifications, setNotifications] = useState(3);
   const [isOnline, setIsOnline] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Modal states
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Form states
+  const [newUser, setNewUser] = useState({
+    username: '',
+    email: '',
+    role: 'customer',
+    status: 'active'
+  });
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: '',
+    farmer: '',
+    price: '',
+    stock: ''
+  });
+
+  // Data states
+  const [users, setUsers] = useState(sampleUsers);
+  const [products, setProducts] = useState(sampleProducts);
+  const [orders, setOrders] = useState(sampleOrders);
   
   // Check if user is authorized to view admin dashboard
   useEffect(() => {
@@ -208,6 +277,165 @@ const AdminDashboard = () => {
       description: 'All notifications have been marked as read',
     });
   };
+
+  // Enhanced User Management Functions
+  const handleAddUser = () => {
+    if (!newUser.username || !newUser.email) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const user = {
+      id: users.length + 1,
+      ...newUser,
+      joinDate: new Date().toISOString().split('T')[0]
+    };
+
+    setUsers([...users, user]);
+    setNewUser({ username: '', email: '', role: 'customer', status: 'active' });
+    setShowAddUserModal(false);
+
+    toast({
+      title: 'User added successfully',
+      description: `${user.username} has been added to the system`,
+    });
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowEditUserModal(true);
+  };
+
+  const handleUpdateUser = () => {
+    setUsers(users.map(user =>
+      user.id === selectedUser.id ? selectedUser : user
+    ));
+    setShowEditUserModal(false);
+    setSelectedUser(null);
+
+    toast({
+      title: 'User updated successfully',
+      description: 'User information has been updated',
+    });
+  };
+
+  const handleDeleteUser = (userId) => {
+    setUsers(users.filter(user => user.id !== userId));
+    toast({
+      title: 'User deleted',
+      description: 'User has been removed from the system',
+    });
+  };
+
+  const handleToggleUserStatus = (userId) => {
+    setUsers(users.map(user =>
+      user.id === userId
+        ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' }
+        : user
+    ));
+
+    toast({
+      title: 'User status updated',
+      description: 'User status has been changed',
+    });
+  };
+
+  // Product Management Functions
+  const handleAddProduct = () => {
+    if (!newProduct.name || !newProduct.category || !newProduct.price) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const product = {
+      id: products.length + 1,
+      ...newProduct,
+      stock: parseInt(newProduct.stock) || 0
+    };
+
+    setProducts([...products, product]);
+    setNewProduct({ name: '', category: '', farmer: '', price: '', stock: '' });
+    setShowAddProductModal(false);
+
+    toast({
+      title: 'Product added successfully',
+      description: `${product.name} has been added to the catalog`,
+    });
+  };
+
+  const handleEditProduct = (product) => {
+    setSelectedProduct(product);
+    setShowEditProductModal(true);
+  };
+
+  const handleUpdateProduct = () => {
+    setProducts(products.map(product =>
+      product.id === selectedProduct.id ? selectedProduct : product
+    ));
+    setShowEditProductModal(false);
+    setSelectedProduct(null);
+
+    toast({
+      title: 'Product updated successfully',
+      description: 'Product information has been updated',
+    });
+  };
+
+  const handleDeleteProduct = (productId) => {
+    setProducts(products.filter(product => product.id !== productId));
+    toast({
+      title: 'Product deleted',
+      description: 'Product has been removed from the catalog',
+    });
+  };
+
+  // Order Management Functions
+  const handleViewOrder = (order) => {
+    setSelectedOrder(order);
+    toast({
+      title: 'Order Details',
+      description: `Viewing order #${order.id} for ${order.customer}`,
+    });
+  };
+
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    setOrders(orders.map(order =>
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
+
+    toast({
+      title: 'Order status updated',
+      description: `Order #${orderId} status changed to ${newStatus}`,
+    });
+  };
+
+  // Utility Functions
+  const handleExportData = (type) => {
+    toast({
+      title: 'Export started',
+      description: `Exporting ${type} data to CSV...`,
+    });
+
+    // Simulate export process
+    setTimeout(() => {
+      toast({
+        title: 'Export completed',
+        description: `${type} data has been exported successfully`,
+      });
+    }, 2000);
+  };
+
+  const handleOpenSettings = () => {
+    setShowSettingsModal(true);
+  };
   
   // If not authorized, don't render the dashboard
   if (!isAuthorized) {
@@ -215,9 +443,9 @@ const AdminDashboard = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       {/* Enhanced Header */}
-      <div className="bg-white border-b border-slate-200 shadow-sm">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200 shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -261,7 +489,7 @@ const AdminDashboard = () => {
               </Button>
 
               {/* Settings */}
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={handleOpenSettings}>
                 <Settings className="h-5 w-5" />
               </Button>
 
@@ -277,24 +505,24 @@ const AdminDashboard = () => {
       <div className="container mx-auto py-6 px-4">
       
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-6">
-            <TabsList className="grid grid-cols-6 w-full h-auto p-2 bg-transparent">
-              <TabsTrigger value="overview" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/50 mb-6 overflow-hidden">
+            <TabsList className="grid grid-cols-6 w-full h-auto p-2 bg-gradient-to-r from-slate-50 to-slate-100">
+              <TabsTrigger value="overview" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
                 <BarChart className="h-4 w-4 mr-2" /> Overview
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+              <TabsTrigger value="analytics" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
                 <Activity className="h-4 w-4 mr-2" /> Analytics
               </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+              <TabsTrigger value="users" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
                 <Users className="h-4 w-4 mr-2" /> Users
               </TabsTrigger>
-              <TabsTrigger value="products" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+              <TabsTrigger value="products" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
                 <Layers className="h-4 w-4 mr-2" /> Products
               </TabsTrigger>
-              <TabsTrigger value="orders" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+              <TabsTrigger value="orders" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
                 <ShoppingBag className="h-4 w-4 mr-2" /> Orders
               </TabsTrigger>
-              <TabsTrigger value="system" className="flex items-center justify-center py-3 px-4 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white">
+              <TabsTrigger value="system" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
                 <Database className="h-4 w-4 mr-2" /> System
               </TabsTrigger>
             </TabsList>
@@ -304,14 +532,14 @@ const AdminDashboard = () => {
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg text-blue-800">Total Users</CardTitle>
+                      <CardTitle className="text-lg text-blue-800 group-hover:text-blue-900 transition-colors">Total Users</CardTitle>
                       <CardDescription className="text-blue-600">Registered customers and farmers</CardDescription>
                     </div>
-                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center group-hover:bg-blue-600 transition-colors group-hover:rotate-12 transform duration-300">
                       <Users className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -330,14 +558,14 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg text-green-800">Total Farms</CardTitle>
+                      <CardTitle className="text-lg text-green-800 group-hover:text-green-900 transition-colors">Total Farms</CardTitle>
                       <CardDescription className="text-green-600">Registered farm partners</CardDescription>
                     </div>
-                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center group-hover:bg-green-600 transition-colors group-hover:rotate-12 transform duration-300">
                       <MapPin className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -358,14 +586,14 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg text-purple-800">Total Revenue</CardTitle>
+                      <CardTitle className="text-lg text-purple-800 group-hover:text-purple-900 transition-colors">Total Revenue</CardTitle>
                       <CardDescription className="text-purple-600">All time sales</CardDescription>
                     </div>
-                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center group-hover:bg-purple-600 transition-colors group-hover:rotate-12 transform duration-300">
                       <DollarSign className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -386,14 +614,14 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg text-orange-800">System Health</CardTitle>
+                      <CardTitle className="text-lg text-orange-800 group-hover:text-orange-900 transition-colors">System Health</CardTitle>
                       <CardDescription className="text-orange-600">Uptime & Performance</CardDescription>
                     </div>
-                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center group-hover:bg-orange-600 transition-colors group-hover:rotate-12 transform duration-300">
                       <Activity className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -593,7 +821,10 @@ const AdminDashboard = () => {
                   <CardTitle>User Management</CardTitle>
                   <CardDescription>Manage customers and farmers</CardDescription>
                 </div>
-                <Button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
+                <Button
+                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                  onClick={() => setShowAddUserModal(true)}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add User
                 </Button>
@@ -633,7 +864,12 @@ const AdminDashboard = () => {
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleExportData('users')}
+                  title="Export Users Data"
+                >
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
@@ -671,18 +907,54 @@ const AdminDashboard = () => {
                         <TableCell>{user.joinDate}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditUser(user)}
+                              title="Edit User"
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            {user.status === 'active' ? (
-                              <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleToggleUserStatus(user.id)}
+                              title={user.status === 'active' ? 'Deactivate User' : 'Activate User'}
+                            >
+                              {user.status === 'active' ? (
                                 <XCircle className="h-4 w-4 text-red-500" />
-                              </Button>
-                            ) : (
-                              <Button variant="ghost" size="icon">
+                              ) : (
                                 <CheckCircle className="h-4 w-4 text-green-500" />
-                              </Button>
-                            )}
+                              )}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Delete User"
+                                >
+                                  <Trash className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete {user.username}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteUser(user.id)}
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -692,14 +964,192 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Add User Modal */}
+          <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New User</DialogTitle>
+                <DialogDescription>
+                  Create a new user account for the Farm Connect platform.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="username" className="text-right">
+                    Username
+                  </Label>
+                  <Input
+                    id="username"
+                    value={newUser.username}
+                    onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="role" className="text-right">
+                    Role
+                  </Label>
+                  <Select
+                    value={newUser.role}
+                    onValueChange={(value) => setNewUser({...newUser, role: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="customer">Customer</SelectItem>
+                      <SelectItem value="farmer">Farmer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select
+                    value={newUser.status}
+                    onValueChange={(value) => setNewUser({...newUser, status: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowAddUserModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddUser}>Add User</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit User Modal */}
+          <Dialog open={showEditUserModal} onOpenChange={setShowEditUserModal}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit User</DialogTitle>
+                <DialogDescription>
+                  Update user information for {selectedUser?.username}.
+                </DialogDescription>
+              </DialogHeader>
+              {selectedUser && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-username" className="text-right">
+                      Username
+                    </Label>
+                    <Input
+                      id="edit-username"
+                      value={selectedUser.username}
+                      onChange={(e) => setSelectedUser({...selectedUser, username: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-email" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={selectedUser.email}
+                      onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-role" className="text-right">
+                      Role
+                    </Label>
+                    <Select
+                      value={selectedUser.role}
+                      onValueChange={(value) => setSelectedUser({...selectedUser, role: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="customer">Customer</SelectItem>
+                        <SelectItem value="farmer">Farmer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-status" className="text-right">
+                      Status
+                    </Label>
+                    <Select
+                      value={selectedUser.status}
+                      onValueChange={(value) => setSelectedUser({...selectedUser, status: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditUserModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateUser}>Update User</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         
         {/* Products Tab */}
         <TabsContent value="products">
           <Card>
             <CardHeader>
-              <CardTitle>Product Management</CardTitle>
-              <CardDescription>Manage product listings</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Product Management</CardTitle>
+                  <CardDescription>Manage product listings</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExportData('products')}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button
+                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                    onClick={() => setShowAddProductModal(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -730,12 +1180,42 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditProduct(product)}
+                              title="Edit Product"
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon">
-                              <Trash className="h-4 w-4 text-red-500" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Delete Product"
+                                >
+                                  <Trash className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete {product.name}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteProduct(product.id)}
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -745,14 +1225,201 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Add Product Modal */}
+          <Dialog open={showAddProductModal} onOpenChange={setShowAddProductModal}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Product</DialogTitle>
+                <DialogDescription>
+                  Add a new product to the Farm Connect catalog.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="product-name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="product-name"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter product name"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="product-category" className="text-right">
+                    Category
+                  </Label>
+                  <Select
+                    value={newProduct.category}
+                    onValueChange={(value) => setNewProduct({...newProduct, category: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vegetables">Vegetables</SelectItem>
+                      <SelectItem value="Fruits">Fruits</SelectItem>
+                      <SelectItem value="Dairy">Dairy</SelectItem>
+                      <SelectItem value="Grains">Grains</SelectItem>
+                      <SelectItem value="Herbs">Herbs</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="product-farmer" className="text-right">
+                    Farmer
+                  </Label>
+                  <Input
+                    id="product-farmer"
+                    value={newProduct.farmer}
+                    onChange={(e) => setNewProduct({...newProduct, farmer: e.target.value})}
+                    className="col-span-3"
+                    placeholder="Enter farmer name"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="product-price" className="text-right">
+                    Price
+                  </Label>
+                  <Input
+                    id="product-price"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    className="col-span-3"
+                    placeholder="$0.00"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="product-stock" className="text-right">
+                    Stock
+                  </Label>
+                  <Input
+                    id="product-stock"
+                    type="number"
+                    value={newProduct.stock}
+                    onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
+                    className="col-span-3"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowAddProductModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddProduct}>Add Product</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Product Modal */}
+          <Dialog open={showEditProductModal} onOpenChange={setShowEditProductModal}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+                <DialogDescription>
+                  Update product information for {selectedProduct?.name}.
+                </DialogDescription>
+              </DialogHeader>
+              {selectedProduct && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-product-name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="edit-product-name"
+                      value={selectedProduct.name}
+                      onChange={(e) => setSelectedProduct({...selectedProduct, name: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-product-category" className="text-right">
+                      Category
+                    </Label>
+                    <Select
+                      value={selectedProduct.category}
+                      onValueChange={(value) => setSelectedProduct({...selectedProduct, category: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Vegetables">Vegetables</SelectItem>
+                        <SelectItem value="Fruits">Fruits</SelectItem>
+                        <SelectItem value="Dairy">Dairy</SelectItem>
+                        <SelectItem value="Grains">Grains</SelectItem>
+                        <SelectItem value="Herbs">Herbs</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-product-farmer" className="text-right">
+                      Farmer
+                    </Label>
+                    <Input
+                      id="edit-product-farmer"
+                      value={selectedProduct.farmer}
+                      onChange={(e) => setSelectedProduct({...selectedProduct, farmer: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-product-price" className="text-right">
+                      Price
+                    </Label>
+                    <Input
+                      id="edit-product-price"
+                      value={selectedProduct.price}
+                      onChange={(e) => setSelectedProduct({...selectedProduct, price: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-product-stock" className="text-right">
+                      Stock
+                    </Label>
+                    <Input
+                      id="edit-product-stock"
+                      type="number"
+                      value={selectedProduct.stock}
+                      onChange={(e) => setSelectedProduct({...selectedProduct, stock: parseInt(e.target.value)})}
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditProductModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateProduct}>Update Product</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         
         {/* Orders Tab */}
         <TabsContent value="orders">
           <Card>
             <CardHeader>
-              <CardTitle>Order Management</CardTitle>
-              <CardDescription>Manage customer orders</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Order Management</CardTitle>
+                  <CardDescription>Manage customer orders</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => handleExportData('orders')}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Orders
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -790,9 +1457,45 @@ const AdminDashboard = () => {
                         </TableCell>
                         <TableCell>{order.date}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleViewOrder(order)}
+                              title="View Order Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Update Status</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'Processing')}
+                                >
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Processing
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'Shipped')}
+                                >
+                                  <Truck className="h-4 w-4 mr-2" />
+                                  Shipped
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'Delivered')}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Delivered
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -948,6 +1651,109 @@ const AdminDashboard = () => {
         </TabsContent>
       </Tabs>
       </div>
+
+      {/* Settings Modal */}
+      <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>System Settings</DialogTitle>
+            <DialogDescription>
+              Configure system settings and preferences.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">General Settings</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="site-name">Site Name</Label>
+                  <Input id="site-name" defaultValue="Farm Connect" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-email">Admin Email</Label>
+                  <Input id="admin-email" defaultValue="admin@farmconnect.com" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Notification Settings</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email-notifications">Email Notifications</Label>
+                  <Select defaultValue="enabled">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="enabled">Enabled</SelectItem>
+                      <SelectItem value="disabled">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                  <Select defaultValue="enabled">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="enabled">Enabled</SelectItem>
+                      <SelectItem value="disabled">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Security Settings</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
+                  <Input id="session-timeout" type="number" defaultValue="30" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="max-login-attempts">Max Login Attempts</Label>
+                  <Input id="max-login-attempts" type="number" defaultValue="5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">System Maintenance</h4>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Database className="h-4 w-4 mr-2" />
+                  Backup Database
+                </Button>
+                <Button variant="outline" size="sm">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Clear Cache
+                </Button>
+                <Button variant="outline" size="sm">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View Logs
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSettingsModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              setShowSettingsModal(false);
+              toast({
+                title: 'Settings saved',
+                description: 'System settings have been updated successfully',
+              });
+            }}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
