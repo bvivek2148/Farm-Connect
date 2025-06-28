@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chat API</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .result { margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px; white-space: pre-wrap; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Farm-Connect Chat API Test</h1>
+        
+        <div class="test-section">
+            <h3>1. Create Session</h3>
+            <button onclick="createSession()">Create Chat Session</button>
+            <div id="session-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Send Message</h3>
+            <input type="text" id="message-input" placeholder="Type a message..." style="width: 300px; padding: 8px;">
+            <button onclick="sendMessage()">Send Message</button>
+            <div id="message-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Quick Actions</h3>
+            <button onclick="getQuickActions()">Get Quick Actions</button>
+            <div id="actions-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+
+        async function createSession() {
+            const resultDiv = document.getElementById('session-result');
+            try {
+                const response = await fetch('/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionId = data.sessionId;
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Session created: ${sessionId}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function sendMessage() {
+            const resultDiv = document.getElementById('message-result');
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Please enter a message';
+                return;
+            }
+            
+            if (!sessionId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Please create a session first';
+                return;
+            }
+
+            try {
+                resultDiv.className = 'result';
+                resultDiv.textContent = '⏳ Sending message...';
+                
+                const response = await fetch('/api/chat/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId,
+                        message,
+                        userId: null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ AI Response: ${data.aiMessage.content}`;
+                    messageInput.value = '';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function getQuickActions() {
+            const resultDiv = document.getElementById('actions-result');
+            try {
+                const response = await fetch('/api/chat/quick-actions');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Quick Actions:\n${JSON.stringify(data.quickActions, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        // Auto-create session on page load
+        window.onload = () => {
+            createSession();
+        };
+    </script>
+</body>
+</html>

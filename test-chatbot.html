@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm-Connect Chatbot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #023436;
+            margin-top: 0;
+        }
+        button {
+            background: linear-gradient(to right, #023436, #03B5AA);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .quick-action {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-action:hover {
+            border-color: #03B5AA;
+            background: #f0fffe;
+        }
+        .quick-action-label {
+            font-weight: bold;
+            color: #023436;
+        }
+        .quick-action-desc {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .quick-action-category {
+            font-size: 0.8em;
+            color: #03B5AA;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Farm-Connect Chatbot Test</h1>
+        <p>Test the improved AI chatbot functionality with enhanced quick actions and responses.</p>
+        <p><strong>Note:</strong> Now using OpenRouter API for AI responses with Llama 3.1 8B model (free tier).</p>
+
+        <div class="test-section">
+            <h3>0. Test Database Connection</h3>
+            <button onclick="testDatabase()">Test Database</button>
+            <div id="database-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>1. Create Chat Session</h3>
+            <button onclick="createSession()">Create New Session</button>
+            <div id="session-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Load Quick Actions</h3>
+            <button onclick="loadQuickActions()">Load Quick Actions</button>
+            <div id="quick-actions-container"></div>
+            <div id="quick-actions-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Quick Action</h3>
+            <button onclick="testQuickAction('crop-help')">Test Crop Help</button>
+            <button onclick="testQuickAction('weather-advice')">Test Weather Advice</button>
+            <button onclick="testQuickAction('farming-tips')">Test Farming Tips</button>
+            <div id="quick-action-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Send Chat Message</h3>
+            <input type="text" id="message-input" placeholder="Type your message..." style="width: 70%; padding: 8px; margin-right: 10px;">
+            <button onclick="sendMessage()">Send Message</button>
+            <div id="message-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Chat History</h3>
+            <button onclick="getChatHistory()">Get Chat History</button>
+            <div id="history-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let quickActions = [];
+
+        async function testDatabase() {
+            try {
+                const response = await fetch('/api/chat/test');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('database-result').textContent =
+                        `✅ Database connection successful!\nUsers count: ${data.usersCount}\nStorage type: ${data.storageType}\nStorage methods: ${data.storageMethods.join(', ')}`;
+                } else {
+                    throw new Error(data.error || 'Database test failed');
+                }
+            } catch (error) {
+                document.getElementById('database-result').textContent =
+                    `❌ Database Error: ${error.message}`;
+            }
+        }
+
+        async function createSession() {
+            try {
+                const response = await fetch('/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionId = data.sessionId;
+                    document.getElementById('session-result').textContent = 
+                        `✅ Session created successfully!\nSession ID: ${sessionId}`;
+                } else {
+                    throw new Error(data.error || 'Failed to create session');
+                }
+            } catch (error) {
+                document.getElementById('session-result').textContent = 
+                    `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function loadQuickActions() {
+            try {
+                const response = await fetch('/api/chat/quick-actions');
+                const data = await response.json();
+                
+                if (data.success) {
+                    quickActions = data.quickActions;
+                    displayQuickActions(quickActions);
+                    document.getElementById('quick-actions-result').textContent = 
+                        `✅ Loaded ${quickActions.length} quick actions successfully!`;
+                } else {
+                    throw new Error(data.error || 'Failed to load quick actions');
+                }
+            } catch (error) {
+                document.getElementById('quick-actions-result').textContent = 
+                    `❌ Error: ${error.message}`;
+            }
+        }
+
+        function displayQuickActions(actions) {
+            const container = document.getElementById('quick-actions-container');
+            container.innerHTML = '<h4>Available Quick Actions:</h4>';
+            
+            const actionsGrid = document.createElement('div');
+            actionsGrid.className = 'quick-actions';
+            
+            actions.forEach(action => {
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'quick-action';
+                actionDiv.onclick = () => testQuickAction(action.id);
+                
+                actionDiv.innerHTML = `
+                    <div class="quick-action-label">${action.label}</div>
+                    <div class="quick-action-desc">${action.description}</div>
+                    <div class="quick-action-category">Category: ${action.category}</div>
+                `;
+                
+                actionsGrid.appendChild(actionDiv);
+            });
+            
+            container.appendChild(actionsGrid);
+        }
+
+        async function testQuickAction(actionId) {
+            if (!sessionId) {
+                alert('Please create a session first!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chat/quick-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        actionId: actionId,
+                        sessionId: sessionId,
+                        userId: null
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('quick-action-result').textContent = 
+                        `✅ Quick action "${actionId}" processed successfully!\n\nAI Response:\n${data.aiMessage.content}`;
+                } else {
+                    throw new Error(data.error || 'Failed to process quick action');
+                }
+            } catch (error) {
+                document.getElementById('quick-action-result').textContent = 
+                    `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                alert('Please enter a message!');
+                return;
+            }
+            
+            if (!sessionId) {
+                alert('Please create a session first!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/chat/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        message: message,
+                        userId: null
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('message-result').textContent = 
+                        `✅ Message sent successfully!\n\nYour message: ${data.userMessage.content}\n\nAI Response: ${data.aiMessage.content}\n\nCategory: ${data.category}`;
+                    messageInput.value = '';
+                } else {
+                    throw new Error(data.error || 'Failed to send message');
+                }
+            } catch (error) {
+                document.getElementById('message-result').textContent = 
+                    `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function getChatHistory() {
+            if (!sessionId) {
+                alert('Please create a session first!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/chat/history/${sessionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const historyText = data.messages.map(msg => 
+                        `[${msg.senderType.toUpperCase()}] ${new Date(msg.createdAt).toLocaleTimeString()}: ${msg.content}`
+                    ).join('\n\n');
+                    
+                    document.getElementById('history-result').textContent = 
+                        `✅ Chat history loaded (${data.messages.length} messages):\n\n${historyText}`;
+                } else {
+                    throw new Error(data.error || 'Failed to get chat history');
+                }
+            } catch (error) {
+                document.getElementById('history-result').textContent = 
+                    `❌ Error: ${error.message}`;
+            }
+        }
+
+        // Auto-test and create session on page load
+        window.onload = function() {
+            testDatabase();
+            setTimeout(() => {
+                createSession();
+                setTimeout(loadQuickActions, 1000);
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

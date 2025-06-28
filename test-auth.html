@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm-Connect Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #023436;
+            margin-top: 0;
+        }
+        button {
+            background: linear-gradient(to right, #023436, #03B5AA);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Farm-Connect Authentication Test</h1>
+        <p>Test the authentication system including login, signup, and forgot password functionality.</p>
+
+        <div class="test-section">
+            <h3>1. Test User Registration</h3>
+            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                <strong>Note:</strong> All new users start as customers only. Admin can change roles later.
+            </p>
+            <input type="text" id="signup-username" placeholder="Username" value="testuser123">
+            <input type="email" id="signup-email" placeholder="Email" value="test@example.com">
+            <input type="password" id="signup-password" placeholder="Password" value="password123">
+            <br>
+            <button onclick="testSignup()">Test Signup</button>
+            <div id="signup-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test User Login</h3>
+            <input type="text" id="login-username" placeholder="Username" value="testuser123">
+            <input type="password" id="login-password" placeholder="Password" value="password123">
+            <br>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testAdminLogin()">Test Admin Login</button>
+            <div id="login-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Forgot Password</h3>
+            <input type="email" id="forgot-email" placeholder="Email" value="test@example.com">
+            <br>
+            <button onclick="testForgotPassword()">Test Existing User</button>
+            <button onclick="testForgotPasswordNonUser()">Test Non-Existing User</button>
+            <div id="forgot-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Test Current User</h3>
+            <button onclick="testCurrentUser()">Get Current User</button>
+            <button onclick="testLogout()">Test Logout</button>
+            <div id="user-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Database Connection Test</h3>
+            <button onclick="testDatabase()">Test Database</button>
+            <div id="database-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testSignup() {
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            try {
+                console.log('Testing signup with:', { username, email });
+                
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        password,
+                        role: 'customer',
+                        firstName: '',
+                        lastName: ''
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Signup response:', data);
+                
+                const resultDiv = document.getElementById('signup-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Signup successful!\nUser: ${data.user.username}\nRole: ${data.user.role}\nToken: ${data.token ? 'Provided' : 'Not provided'}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Signup failed: ${data.message}`;
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                document.getElementById('signup-result').className = 'result error';
+                document.getElementById('signup-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                console.log('Testing login with:', { username });
+                
+                const response = await fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                
+                const resultDiv = document.getElementById('login-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Login successful!\nUser: ${data.user.username}\nRole: ${data.user.role}\nEmail: ${data.user.email}\nToken: ${data.token ? 'Provided' : 'Not provided'}`;
+                    
+                    // Store token for further tests
+                    if (data.token) {
+                        localStorage.setItem('testToken', data.token);
+                    }
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Login failed: ${data.message}`;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('login-result').className = 'result error';
+                document.getElementById('login-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testAdminLogin() {
+            try {
+                console.log('Testing admin login');
+                
+                const response = await fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: '123456' })
+                });
+                
+                const data = await response.json();
+                console.log('Admin login response:', data);
+                
+                const resultDiv = document.getElementById('login-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Admin login successful!\nUser: ${data.user.username}\nRole: ${data.user.role}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Admin login failed: ${data.message}`;
+                }
+            } catch (error) {
+                console.error('Admin login error:', error);
+                document.getElementById('login-result').className = 'result error';
+                document.getElementById('login-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testForgotPassword() {
+            const email = document.getElementById('forgot-email').value;
+
+            try {
+                console.log('Testing forgot password with existing user:', { email });
+
+                const response = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+                console.log('Forgot password response:', data);
+
+                const resultDiv = document.getElementById('forgot-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Forgot password successful!\nMessage: ${data.message}${data.resetToken ? '\nReset Token: ' + data.resetToken : ''}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Forgot password failed: ${data.message}${data.action ? '\nAction: ' + data.action : ''}`;
+                }
+            } catch (error) {
+                console.error('Forgot password error:', error);
+                document.getElementById('forgot-result').className = 'result error';
+                document.getElementById('forgot-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testForgotPasswordNonUser() {
+            try {
+                console.log('Testing forgot password with non-existing user');
+
+                const response = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'nonexistent@example.com' })
+                });
+
+                const data = await response.json();
+                console.log('Forgot password (non-user) response:', data);
+
+                const resultDiv = document.getElementById('forgot-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Unexpected success: ${data.message}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `✅ Expected behavior: ${data.message}${data.action ? '\nSuggested action: ' + data.action : ''}`;
+                }
+            } catch (error) {
+                console.error('Forgot password (non-user) error:', error);
+                document.getElementById('forgot-result').className = 'result error';
+                document.getElementById('forgot-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testCurrentUser() {
+            try {
+                const token = localStorage.getItem('testToken');
+                console.log('Testing current user with token:', token ? 'Present' : 'Not present');
+                
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/auth/user', {
+                    method: 'GET',
+                    headers
+                });
+                
+                const data = await response.json();
+                console.log('Current user response:', data);
+                
+                const resultDiv = document.getElementById('user-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Current user retrieved!\nUser: ${data.user.username}\nRole: ${data.user.role}\nEmail: ${data.user.email}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Current user failed: ${data.message}`;
+                }
+            } catch (error) {
+                console.error('Current user error:', error);
+                document.getElementById('user-result').className = 'result error';
+                document.getElementById('user-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testLogout() {
+            try {
+                console.log('Testing logout');
+                
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                console.log('Logout response:', data);
+                
+                const resultDiv = document.getElementById('user-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Logout successful!\nMessage: ${data.message}`;
+                    localStorage.removeItem('testToken');
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Logout failed: ${data.message}`;
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                document.getElementById('user-result').className = 'result error';
+                document.getElementById('user-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        async function testDatabase() {
+            try {
+                console.log('Testing database connection');
+                
+                const response = await fetch('/api/chat/test');
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('database-result');
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Database connection successful!\nUsers count: ${data.usersCount}\nStorage type: ${data.storageType}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Database test failed: ${data.error}`;
+                }
+            } catch (error) {
+                console.error('Database test error:', error);
+                document.getElementById('database-result').className = 'result error';
+                document.getElementById('database-result').textContent = `❌ Network error: ${error.message}`;
+            }
+        }
+
+        // Auto-test database on page load
+        window.onload = function() {
+            testDatabase();
+        };
+    </script>
+</body>
+</html>
