@@ -4,6 +4,12 @@ import { generateAIResponse, categorizeMessage, getQuickActions } from "./ai-ser
 import { createMessageSchema } from "@shared/schema";
 import { v4 as uuidv4 } from 'uuid';
 
+// Simple in-memory counter to ensure unique IDs for fallback messages
+let fallbackIdCounter = Date.now();
+function getUniqueFallbackId() {
+  return fallbackIdCounter++;
+}
+
 export function registerChatRoutes(app: Express) {
   // Test database connection
   app.get("/api/chat/test", async (req, res) => {
@@ -58,7 +64,7 @@ export function registerChatRoutes(app: Express) {
         console.error('Database save error:', dbError);
         // Create a fallback message object
         userMessage = {
-          id: Date.now(),
+          id: getUniqueFallbackId(),
           sessionId,
           userId: userId || null,
           senderType: "user",
@@ -94,7 +100,7 @@ export function registerChatRoutes(app: Express) {
         console.error('Database save error for AI message:', dbError);
         // Create a fallback message object
         aiMessage = {
-          id: Date.now() + 1,
+          id: getUniqueFallbackId(),
           sessionId,
           userId: null,
           senderType: "ai",
@@ -198,7 +204,7 @@ export function registerChatRoutes(app: Express) {
         console.error('Database save error for quick action:', dbError);
         // Create a fallback message object
         aiMessage = {
-          id: Date.now(),
+          id: getUniqueFallbackId(),
           sessionId,
           userId: null,
           senderType: "ai",
