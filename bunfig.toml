@@ -1,0 +1,65 @@
+# Bun configuration file
+[install]
+# Set the registry URL
+registry = "https://registry.npmjs.org"
+
+# Enable installing peer dependencies automatically
+peer = true
+
+# Set the cache directory
+cache = "node_modules/.cache/bun"
+
+# Production install options
+production = false
+optional = true
+dev = true
+
+[install.scopes]
+# Scoped package configuration if needed
+
+[test]
+# Test configuration
+preload = ["./src/test/setup.ts"]
+
+[dev]
+# Development server options for Bun
+port = 5000
+host = "0.0.0.0"
+
+# Hot reloading
+hot = true
+
+[build]
+# Build configuration
+target = "node"
+format = "esm"
+splitting = true
+minify = true
+
+# Output directory
+outdir = "./dist"
+
+# External dependencies (not bundled)
+external = [
+  "pg",
+  "pg-native",
+  "@neondatabase/serverless",
+  "bcryptjs",
+  "sharp"
+]
+
+[bundle]
+# Bundling options
+platform = "node"
+format = "esm"
+target = "node20"
+
+# Tree shaking
+treeshaking = true
+
+# Source maps
+sourcemap = true
+
+[runtime]
+# Runtime optimizations
+bun = true
