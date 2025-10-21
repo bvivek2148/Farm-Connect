@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
         });
       }
 
-      const newAdmin = await createAdminUser(username, email, password, req.user.userId);
+      const newAdmin = await createAdminUser(username, email, password, req.user?.userId || 0);
       
       res.status(201).json({
         success: true,
@@ -164,17 +164,17 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
         products,
         count: products.length
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Error fetching products:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
+        message: errorMessage,
+        name: error instanceof Error ? error.name : 'Unknown'
       });
       res.status(500).json({
         success: false,
         message: 'Failed to fetch products',
-        error: error.message
+        error: errorMessage
       });
     }
   });
@@ -184,10 +184,18 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
       const validatedData = createProductSchema.parse(req.body);
 
       // Add farmer information from authenticated user
+      const userId = req.user?.userId;
+      const username = req.user?.username;
+      if (!userId || !username) {
+        return res.status(401).json({
+          success: false,
+          message: 'User information not found'
+        });
+      }
       const productData = {
         ...validatedData,
-        farmerId: req.user.userId,
-        farmer: req.user.username
+        farmerId: userId,
+        farmer: username
       };
 
       const product = await storage.createProduct(productData);

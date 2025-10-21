@@ -69,11 +69,11 @@ export function registerChatRoutes(app: Express) {
       console.log('Storage object:', typeof storage, Object.keys(storage));
       console.log('createChatMessage function:', typeof storage.createChatMessage);
 
-      let userMessage;
+      let userMessage: any;
       try {
         userMessage = await storage.createChatMessage({
           sessionId,
-          userId: userId || null,
+          userId: userId || undefined,
           senderType: "user",
           content: message,
         });
@@ -105,11 +105,11 @@ export function registerChatRoutes(app: Express) {
 
       // Save AI response
       console.log('Saving AI message...');
-      let aiMessage;
+      let aiMessage: any;
       try {
         aiMessage = await storage.createChatMessage({
           sessionId,
-          userId: null,
+          userId: undefined,
           senderType: "ai",
           content: aiResponse,
         });
@@ -147,7 +147,7 @@ export function registerChatRoutes(app: Express) {
   app.get("/api/chat/history/:sessionId", async (req, res) => {
     try {
       const { sessionId } = req.params;
-      let messages;
+      let messages: any[] = [];
 
       try {
         messages = await storage.getChatHistory(sessionId);
@@ -211,11 +211,11 @@ export function registerChatRoutes(app: Express) {
       const response = getQuickActionResponse(actionId);
 
       // Save AI response as a message
-      let aiMessage;
+      let aiMessage: any;
       try {
         aiMessage = await storage.createChatMessage({
           sessionId,
-          userId: null,
+          userId: undefined,
           senderType: "ai",
           content: response,
         });

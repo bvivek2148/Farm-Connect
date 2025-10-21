@@ -5,6 +5,7 @@ import { loginUserSchema, registerUserSchema } from '../shared/schema';
 import { storage } from './storage';
 import { sendWelcomeEmail } from './email';
 import { validatePassword, validateEmail, validateUsername } from './security';
+import './types'; // Import Express type augmentation
 
 // JWT Secret - use environment variable or fallback (dev only)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret';
@@ -336,11 +337,12 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
 
     // Handle Zod validation errors
     if (error.name === 'ZodError') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid username or password format',
         errors: error.errors
       });
+      return;
     }
 
     res.status(500).json({
@@ -375,10 +377,11 @@ export async function forgotPasswordHandler(req: Request, res: Response): Promis
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Email is required'
       });
+      return;
     }
 
     // Check if user exists
@@ -386,11 +389,12 @@ export async function forgotPasswordHandler(req: Request, res: Response): Promis
 
     // For better UX, tell user if account doesn't exist and suggest creating one
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'No account found with this email address. Please create an account first.',
         action: 'signup'
       });
+      return;
     }
 
     // Generate reset token (in production, use crypto.randomBytes)
@@ -427,13 +431,22 @@ export async function forgotPasswordHandler(req: Request, res: Response): Promis
 export async function currentUserHandler(req: Request, res: Response): Promise<void> {
   try {
     // User data is already attached to req by authenticate middleware
-    const user = await storage.getUser(req.user?.userId);
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized'
+      });
+      return;
+    }
+    const user = await storage.getUser(userId);
 
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'User not found'
       });
+      return;
     }
 
     // Return user data without sensitive information

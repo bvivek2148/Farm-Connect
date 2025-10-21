@@ -1,6 +1,7 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import bcryptjs from 'bcryptjs';
 import { storage } from './storage';
 import { comparePassword } from './auth';
 
@@ -12,6 +13,9 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 
 console.log('🔐 Passport configured with Local and JWT strategies only');
 console.log('ℹ️ OAuth strategies (Google, Facebook, GitHub) have been removed');
+
+// Serialize user to session
+passport.serializeUser((user: any, done) => {
   done(null, user.id);
 });
 
@@ -45,7 +49,7 @@ passport.use('local', new LocalStrategy(
       }
 
       // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcryptjs.compare(password, user.password);
       
       if (!isValidPassword) {
         return done(null, false, { message: 'Invalid username/email or password' });

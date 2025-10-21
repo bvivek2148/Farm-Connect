@@ -123,25 +123,56 @@ import {
 
 // No sample data - all data will be fetched from API
 
+interface FarmerUser {
+  id: number;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface FarmerProduct {
+  id: number;
+  name: string;
+  category: string;
+  price: string;
+  stock: string | number;
+  image: string;
+  unit: string;
+  description: string;
+  organic: boolean;
+  featured: boolean;
+}
+
+interface FarmerOrder {
+  id: number;
+  productName?: string;
+  quantity?: number;
+  total?: string;
+  status?: string;
+  date?: string;
+  customer?: string;
+}
+
 const FarmerDashboard = () => {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [farmerData, setFarmerData] = useState(null);
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [farmerData, setFarmerData] = useState<FarmerUser | null>(null);
 
   // State management
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // Modal states
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [showEditProductModal, setShowEditProductModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showAddProductModal, setShowAddProductModal] = useState<boolean>(false);
+  const [showEditProductModal, setShowEditProductModal] = useState<boolean>(false);
+  const [selectedProduct, setSelectedProduct] = useState<FarmerProduct | null>(null);
 
   // Form states
-  const [newProduct, setNewProduct] = useState({
+  const [newProduct, setNewProduct] = useState<Omit<FarmerProduct, 'id'>>({
     name: '',
     category: '',
     price: '',
@@ -155,10 +186,10 @@ const FarmerDashboard = () => {
   const [productImagePreview, setProductImagePreview] = useState<string | null>(null);
 
   // Data states - Start empty, load from API
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [products, setProducts] = useState<FarmerProduct[]>([]);
+  const [orders, setOrders] = useState<FarmerOrder[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch farmer's data from API
   const fetchFarmerData = async () => {

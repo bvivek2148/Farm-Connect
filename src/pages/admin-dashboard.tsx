@@ -120,53 +120,101 @@ import NotificationPanel from '@/components/NotificationPanel';
 
 // No sample data - all data will be fetched from API
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  status: string;
+  joinDate: string;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  category: string;
+  farmer: string;
+  price: string;
+  stock: number;
+  image: string;
+}
+
+interface Order {
+  id: number;
+  customer: string;
+  items: string;
+  total: string;
+  status: string;
+  date: string;
+}
+
+interface Statistics {
+  totalUsers: number;
+  activeUsers: number;
+  totalFarms: number;
+  totalOrders: number;
+  totalRevenue: number;
+  uniqueVisitors: number;
+  monthlyGrowth: number;
+  conversionRate: number;
+  avgOrderValue: number;
+  customerSatisfaction: number;
+  systemUptime: number;
+  activeConnections: number;
+  usersTrend: number;
+  farmsTrend: number;
+  ordersTrend: number;
+  revenueTrend: number;
+  visitorsTrend: number;
+}
+
 const AdminDashboard = () => {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
 
   // Enhanced state management
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterRole, setFilterRole] = useState('all');
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [notificationCount, setNotificationCount] = useState(3);
-  const [isOnline, setIsOnline] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [notificationCount, setNotificationCount] = useState<number>(3);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // Modal states
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [showEditUserModal, setShowEditUserModal] = useState(false);
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [showEditProductModal, setShowEditProductModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showAddUserModal, setShowAddUserModal] = useState<boolean>(false);
+  const [showEditUserModal, setShowEditUserModal] = useState<boolean>(false);
+  const [showAddProductModal, setShowAddProductModal] = useState<boolean>(false);
+  const [showEditProductModal, setShowEditProductModal] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Form states
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<Omit<User, 'id' | 'joinDate'>>({
     username: '',
     email: '',
     role: 'customer',
     status: 'active'
   });
-  const [newProduct, setNewProduct] = useState({
+  const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
     name: '',
     category: '',
     farmer: '',
     price: '',
-    stock: '',
+    stock: 0,
     image: ''
   });
   const [productImagePreview, setProductImagePreview] = useState<string | null>(null);
 
   // Data states - All start empty, load from API
-  const [users, setUsers] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [statistics, setStatistics] = useState({
+  const [users, setUsers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [statistics, setStatistics] = useState<Statistics>({
     totalUsers: 0,
     activeUsers: 0,
     totalFarms: 0,
@@ -185,8 +233,8 @@ const AdminDashboard = () => {
     revenueTrend: 0,
     visitorsTrend: 0
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch data from API
   const fetchData = async () => {

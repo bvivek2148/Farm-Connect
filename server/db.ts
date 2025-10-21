@@ -31,31 +31,31 @@ export const db = {
   query: {
     users: {
       findMany: () => supabase.from('users').select('*'),
-      findUnique: (where) => supabase.from('users').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
-      create: (data) => supabase.from('users').insert(data).select().single(),
-      update: (where, data) => supabase.from('users').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
-      delete: (where) => supabase.from('users').delete().eq(Object.keys(where)[0], Object.values(where)[0])
+      findUnique: (where: Record<string, any>) => supabase.from('users').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
+      create: (data: any) => supabase.from('users').insert(data).select().single(),
+      update: (where: Record<string, any>, data: any) => supabase.from('users').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
+      delete: (where: Record<string, any>) => supabase.from('users').delete().eq(Object.keys(where)[0], Object.values(where)[0])
     },
     products: {
       findMany: () => supabase.from('products').select('*'),
-      findUnique: (where) => supabase.from('products').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
-      create: (data) => supabase.from('products').insert(data).select().single(),
-      update: (where, data) => supabase.from('products').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
-      delete: (where) => supabase.from('products').delete().eq(Object.keys(where)[0], Object.values(where)[0])
+      findUnique: (where: Record<string, any>) => supabase.from('products').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
+      create: (data: any) => supabase.from('products').insert(data).select().single(),
+      update: (where: Record<string, any>, data: any) => supabase.from('products').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
+      delete: (where: Record<string, any>) => supabase.from('products').delete().eq(Object.keys(where)[0], Object.values(where)[0])
     },
     contactSubmissions: {
       findMany: () => supabase.from('contact_submissions').select('*'),
-      findUnique: (where) => supabase.from('contact_submissions').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
-      create: (data) => supabase.from('contact_submissions').insert(data).select().single(),
-      update: (where, data) => supabase.from('contact_submissions').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
-      delete: (where) => supabase.from('contact_submissions').delete().eq(Object.keys(where)[0], Object.values(where)[0])
+      findUnique: (where: Record<string, any>) => supabase.from('contact_submissions').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
+      create: (data: any) => supabase.from('contact_submissions').insert(data).select().single(),
+      update: (where: Record<string, any>, data: any) => supabase.from('contact_submissions').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
+      delete: (where: Record<string, any>) => supabase.from('contact_submissions').delete().eq(Object.keys(where)[0], Object.values(where)[0])
     },
     chatMessages: {
       findMany: () => supabase.from('chat_messages').select('*'),
-      findUnique: (where) => supabase.from('chat_messages').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
-      create: (data) => supabase.from('chat_messages').insert(data).select().single(),
-      update: (where, data) => supabase.from('chat_messages').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
-      delete: (where) => supabase.from('chat_messages').delete().eq(Object.keys(where)[0], Object.values(where)[0])
+      findUnique: (where: Record<string, any>) => supabase.from('chat_messages').select('*').eq(Object.keys(where)[0], Object.values(where)[0]).single(),
+      create: (data: any) => supabase.from('chat_messages').insert(data).select().single(),
+      update: (where: Record<string, any>, data: any) => supabase.from('chat_messages').update(data).eq(Object.keys(where)[0], Object.values(where)[0]).select().single(),
+      delete: (where: Record<string, any>) => supabase.from('chat_messages').delete().eq(Object.keys(where)[0], Object.values(where)[0])
     }
   },
   // Direct access to Supabase for advanced operations
