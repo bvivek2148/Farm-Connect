@@ -280,7 +280,7 @@ const AdminDashboard = () => {
   // Calculate dynamic statistics based on current data
   const dynamicStatistics = statistics;
   
-  // Load real users from API
+  // Load real users from API only
   const loadRealUsers = async () => {
     try {
       const token = localStorage.getItem('farmConnectToken');
@@ -306,54 +306,13 @@ const AdminDashboard = () => {
           return;
         }
       }
+      // If API fails, show empty list - no fallback mock data
+      setUsers([]);
     } catch (error) {
       console.error('Error fetching users from API:', error);
+      // Show empty list on error - no fallback mock data
+      setUsers([]);
     }
-
-    // Fallback: Get users from localStorage (for backward compatibility)
-    const realUsers = [];
-    const keys = Object.keys(localStorage);
-    keys.forEach(key => {
-      if (key.startsWith('farmConnectUser_')) {
-        try {
-          const userData = JSON.parse(localStorage.getItem(key));
-          if (userData && userData.username) {
-            realUsers.push({
-              id: userData.id || Date.now(),
-              username: userData.username,
-              email: userData.email,
-              role: userData.role || 'customer',
-              status: 'active',
-              joinDate: new Date().toISOString().split('T')[0]
-            });
-          }
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-        }
-      }
-    });
-
-    // Add current logged-in user if exists
-    const currentUser = localStorage.getItem('farmConnectUser');
-    if (currentUser) {
-      try {
-        const userData = JSON.parse(currentUser);
-        if (userData && userData.username && !realUsers.find(u => u.username === userData.username)) {
-          realUsers.push({
-            id: userData.id || Date.now(),
-            username: userData.username,
-            email: userData.email,
-            role: userData.role || 'customer',
-            status: 'active',
-            joinDate: new Date().toISOString().split('T')[0]
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing current user data:', error);
-      }
-    }
-
-    setUsers(realUsers);
   };
 
   // Check if user is authorized to view admin dashboard
