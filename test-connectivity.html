@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Connectivity Test</title>
+</head>
+<body>
+    <h1>Supabase Connectivity Test</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+
+        function log(message) {
+            results.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+
+        async function testConnectivity() {
+            log('Starting connectivity tests...');
+
+            // Test 1: Basic fetch to Supabase
+            try {
+                log('Test 1: Basic connectivity to Supabase...');
+                const response = await fetch('https://wkaqwxfuvqpqbwqzprlb.supabase.co/rest/v1/', {
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrYXF3eGZ1dnFwcWJ3cXpwcmxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI1Njg5NDIsImV4cCI6MjA0ODE0NDk0Mn0.0-oEgOcn3DtvBN4QVm49-wJXGD7_zEaYY1lMz5vYhYo'
+                    }
+                });
+                log('✅ Basic connectivity: ' + response.status + ' ' + response.statusText);
+            } catch (error) {
+                log('❌ Basic connectivity failed: ' + error.message);
+            }
+
+            // Test 2: Auth endpoint
+            try {
+                log('Test 2: Auth endpoint...');
+                const response = await fetch('https://wkaqwxfuvqpqbwqzprlb.supabase.co/auth/v1/settings', {
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrYXF3eGZ1dnFwcWJ3cXpwcmxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI1Njg5NDIsImV4cCI6MjA0ODE0NDk0Mn0.0-oEgOcn3DtvBN4QVm49-wJXGD7_zEaYY1lMz5vYhYo'
+                    }
+                });
+                const data = await response.json();
+                log('✅ Auth endpoint: ' + response.status + ', External providers: ' + JSON.stringify(data.external));
+            } catch (error) {
+                log('❌ Auth endpoint failed: ' + error.message);
+            }
+
+            // Test 3: Try to authenticate with invalid credentials (should fail gracefully)
+            try {
+                log('Test 3: Test login with invalid credentials...');
+                const response = await fetch('https://wkaqwxfuvqpqbwqzprlb.supabase.co/auth/v1/token?grant_type=password', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrYXF3eGZ1dnFwcWJ3cXpwcmxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI1Njg5NDIsImV4cCI6MjA0ODE0NDk0Mn0.0-oEgOcn3DtvBN4QVm49-wJXGD7_zEaYY1lMz5vYhYo',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@invalid.com',
+                        password: 'invalidpass'
+                    })
+                });
+                const data = await response.json();
+                log('✅ Login test response: ' + response.status + ', message: ' + (data.error || data.msg));
+            } catch (error) {
+                log('❌ Login test failed: ' + error.message);
+            }
+
+            log('Tests completed!');
+        }
+
+        testConnectivity();
+    </script>
+</body>
+</html>

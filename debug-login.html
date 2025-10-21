@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Login Test</title>
+</head>
+<body>
+    <h1>Login Debug Test</h1>
+    <div>
+        <button onclick="testDirectLogin()" id="testBtn">Test Direct Login</button>
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+        const supabaseUrl = 'https://wkaqwxfuvqpqbwqzprlb.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrYXF3eGZ1dnFwcWJ3cXpwcmxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI1Njg5NDIsImV4cCI6MjA0ODE0NDk0Mn0.0-oEgOcn3DtvBN4QVm49-wJXGD7_zEaYY1lMz5vYhYo'
+
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        const results = document.getElementById('results')
+
+        function log(message, isError = false) {
+            const p = document.createElement('p')
+            p.textContent = message
+            p.style.color = isError ? 'red' : 'green'
+            results.appendChild(p)
+            console.log(message)
+        }
+
+        window.testDirectLogin = async function() {
+            const btn = document.getElementById('testBtn')
+            btn.disabled = true
+            btn.textContent = 'Testing...'
+            results.innerHTML = ''
+
+            try {
+                log('🔍 Testing Supabase connectivity...')
+                
+                // Test 1: Basic connectivity
+                const healthCheck = await fetch(supabaseUrl + '/rest/v1/', {
+                    headers: { 'apikey': supabaseKey }
+                })
+                log(`✅ Health check: ${healthCheck.status}`)
+
+                // Test 2: Auth settings
+                const authSettings = await supabase.auth.getSession()
+                log(`✅ Auth client initialized: ${!!authSettings}`)
+
+                // Test 3: Try login with invalid credentials (should fail gracefully)
+                log('🔑 Testing login with test credentials...')
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: 'test@example.com',
+                    password: 'wrongpassword'
+                })
+
+                if (error) {
+                    log(`Expected auth error: ${error.message}`)
+                } else {
+                    log('Unexpected success with invalid credentials', true)
+                }
+
+                // Test 4: Check if there are any users we can use
+                log('🔍 Checking auth users...')
+                
+                // Note: This won't work with anon key, but let's see the error
+                const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
+                if (usersError) {
+                    log(`Expected: Cannot list users with anon key: ${usersError.message}`)
+                }
+
+                log('✅ All connectivity tests completed!')
+
+            } catch (error) {
+                log(`❌ Test failed: ${error.message}`, true)
+            } finally {
+                btn.disabled = false
+                btn.textContent = 'Test Direct Login'
+            }
+        }
+    </script>
+</body>
+</html>
