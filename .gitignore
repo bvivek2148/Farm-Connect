@@ -70,3 +70,7 @@ coverage
 # Misc
 server/public
 vite.config.ts.*
+
+# Sensitive documentation
+OAUTH_INTEGRATION.md
+OAUTH_INTEGRATION_SUMMARY.md
