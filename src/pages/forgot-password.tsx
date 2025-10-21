@@ -90,16 +90,14 @@ const ForgotPasswordPage = () => {
             title: "Account Not Found",
             description: result.message,
             variant: "destructive",
-            action: {
-              label: "Create Account",
-              onClick: () => window.location.href = '/sign-up'
-            }
+            action: undefined
           });
         } else {
           toast({
             title: "Error",
             description: result.message || "Failed to send reset instructions. Please try again.",
             variant: "destructive",
+            duration: 5000,
           });
         }
       }

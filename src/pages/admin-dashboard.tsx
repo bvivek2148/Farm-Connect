@@ -287,19 +287,19 @@ const AdminDashboard = () => {
       
       const calculatedStats = {
         totalUsers: realUsers.length,
-        activeUsers: realUsers.filter(user => user.status !== 'inactive').length,
-        totalFarms: realUsers.filter(user => user.role === 'farmer').length,
+        activeUsers: realUsers.filter((user: any) => user.status !== 'inactive').length,
+        totalFarms: realUsers.filter((user: any) => user.role === 'farmer').length,
         totalOrders: realOrders.length,
-        totalRevenue: realOrders.reduce((sum, order) => sum + (parseFloat(order.total?.replace?.('$', '')) || 0), 0),
+        totalRevenue: realOrders.reduce((sum: number, order: any) => sum + (parseFloat(order.total?.replace?.('$', '')) || 0), 0),
         uniqueVisitors: realUsers.length * 2.1, // Estimated multiplier
         monthlyGrowth: realUsers.length > 0 ? Math.min(((realUsers.length / 30) * 100), 50) : 0,
         conversionRate: realOrders.length > 0 ? ((realOrders.length / Math.max(realUsers.length, 1)) * 100) : 0,
-        avgOrderValue: realOrders.length > 0 ? (realOrders.reduce((sum, order) => sum + (parseFloat(order.total?.replace?.('$', '')) || 0), 0) / realOrders.length) : 0,
+        avgOrderValue: realOrders.length > 0 ? (realOrders.reduce((sum: number, order: any) => sum + (parseFloat(order.total?.replace?.('$', '')) || 0), 0) / realOrders.length) : 0,
         customerSatisfaction: 4.5, // This would come from reviews/ratings
         systemUptime: 99.5, // This would come from monitoring
-        activeConnections: realUsers.filter(user => user.status !== 'inactive').length,
+        activeConnections: realUsers.filter((user: any) => user.status !== 'inactive').length,
         usersTrend: realUsers.length > 10 ? 8.2 : 0,
-        farmsTrend: realUsers.filter(user => user.role === 'farmer').length > 5 ? 15.3 : 0,
+        farmsTrend: realUsers.filter((user: any) => user.role === 'farmer').length > 5 ? 15.3 : 0,
         ordersTrend: realOrders.length > 5 ? 5.1 : 0,
         revenueTrend: realOrders.length > 0 ? 12.7 : 0,
         visitorsTrend: realUsers.length > 0 ? 5.8 : 0
@@ -342,7 +342,7 @@ const AdminDashboard = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          const realUsers = result.users.map(user => ({
+          const realUsers = result.users.map((user: any) => ({
             id: user.id,
             username: user.username,
             email: user.email,
@@ -492,13 +492,14 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setShowEditUserModal(true);
   };
 
   const handleUpdateUser = () => {
     // Update users state
+    if (!selectedUser) return;
     const updatedUsers = users.map(user =>
       user.id === selectedUser.id ? selectedUser : user
     );
@@ -517,9 +518,10 @@ const AdminDashboard = () => {
       }
 
       // Also check for user-specific storage
-      const userKey = `farmConnectUser_${selectedUser.username}`;
-      if (localStorage.getItem(userKey)) {
-        const userData = JSON.parse(localStorage.getItem(userKey));
+      const userKey = `farmConnectUser_${selectedUser?.username}`;
+      const storedData = localStorage.getItem(userKey);
+      if (storedData) {
+        const userData = JSON.parse(storedData);
         const updatedUserData = { ...userData, ...selectedUser };
         localStorage.setItem(userKey, JSON.stringify(updatedUserData));
       }
@@ -536,7 +538,7 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = (userId: number) => {
     const userToDelete = users.find(user => user.id === userId);
     if (!userToDelete) return;
 
@@ -566,7 +568,7 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleToggleUserStatus = (userId) => {
+  const handleToggleUserStatus = (userId: number) => {
     const userToUpdate = users.find(user => user.id === userId);
     if (!userToUpdate) return;
 
@@ -581,8 +583,9 @@ const AdminDashboard = () => {
     // Update localStorage
     try {
       const userKey = `farmConnectUser_${userToUpdate.username}`;
-      if (localStorage.getItem(userKey)) {
-        const userData = JSON.parse(localStorage.getItem(userKey));
+      const storedData = localStorage.getItem(userKey);
+      if (storedData) {
+        const userData = JSON.parse(storedData);
         const updatedUserData = { ...userData, status: newStatus };
         localStorage.setItem(userKey, JSON.stringify(updatedUserData));
       }
@@ -643,12 +646,12 @@ const AdminDashboard = () => {
     const product = {
       id: products.length + 1,
       ...newProduct,
-      stock: parseInt(newProduct.stock) || 0,
+      stock: typeof newProduct.stock === 'string' ? parseInt(newProduct.stock) : (newProduct.stock || 0),
       image: newProduct.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(newProduct.name)}`
     };
 
     setProducts([...products, product]);
-    setNewProduct({ name: '', category: '', farmer: '', price: '', stock: '', image: '' });
+    setNewProduct({ name: '', category: '', farmer: '', price: '', stock: 0, image: '' });
     setProductImagePreview(null);
     setShowAddProductModal(false);
 
@@ -658,12 +661,13 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleEditProduct = (product) => {
+  const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     setShowEditProductModal(true);
   };
 
   const handleUpdateProduct = () => {
+    if (!selectedProduct) return;
     setProducts(products.map(product =>
       product.id === selectedProduct.id ? selectedProduct : product
     ));
@@ -676,7 +680,7 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = (productId: number) => {
     setProducts(products.filter(product => product.id !== productId));
     toast({
       title: 'Product deleted',
@@ -685,7 +689,7 @@ const AdminDashboard = () => {
   };
 
   // Order Management Functions
-  const handleViewOrder = (order) => {
+  const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     toast({
       title: 'Order Details',
@@ -693,7 +697,7 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
+  const handleUpdateOrderStatus = (orderId: number, newStatus: string) => {
     setOrders(orders.map(order =>
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
@@ -705,7 +709,7 @@ const AdminDashboard = () => {
   };
 
   // Utility Functions
-  const handleExportData = (type) => {
+  const handleExportData = (type: string) => {
     toast({
       title: 'Export started',
       description: `Exporting ${type} data to CSV...`,
@@ -1607,7 +1611,7 @@ const AdminDashboard = () => {
                     id="product-stock"
                     type="number"
                     value={newProduct.stock}
-                    onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
+                    onChange={(e) => setNewProduct({...newProduct, stock: parseInt(e.target.value) || 0})}
                     className="col-span-3"
                     placeholder="0"
                   />

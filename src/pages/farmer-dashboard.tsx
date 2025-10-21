@@ -142,6 +142,7 @@ interface FarmerProduct {
   description: string;
   organic: boolean;
   featured: boolean;
+  status?: string;
 }
 
 interface FarmerOrder {
@@ -152,6 +153,7 @@ interface FarmerOrder {
   status?: string;
   date?: string;
   customer?: string;
+  items?: string | any[];
 }
 
 const FarmerDashboard = () => {
@@ -217,7 +219,7 @@ const FarmerDashboard = () => {
         if (allProductsResponse.ok) {
           const allProductsData = await allProductsResponse.json();
           const farmerProducts = allProductsData.products.filter(
-            product => product.farmer === farmerData.username || product.farmerId === farmerData.id
+            (product: any) => product.farmer === farmerData.username || product.farmerId === farmerData.id
           );
           setProducts(farmerProducts);
         }
@@ -253,10 +255,10 @@ const FarmerDashboard = () => {
   // Calculate farmer statistics
   const farmerStatistics = {
     totalProducts: products.length,
-    activeProducts: products.filter(product => product.status === 'active').length,
+    activeProducts: products.filter((product: any) => product.status === 'active').length,
     totalOrders: orders.length,
-    totalRevenue: orders.reduce((sum, order) => sum + parseFloat(order.total?.replace('$', '') || '0'), 0),
-    avgOrderValue: orders.length > 0 ? (orders.reduce((sum, order) => sum + parseFloat(order.total?.replace('$', '') || '0'), 0) / orders.length) : 0,
+    totalRevenue: orders.reduce((sum: number, order: any) => sum + parseFloat(order.total?.replace('$', '') || '0'), 0),
+    avgOrderValue: orders.length > 0 ? (orders.reduce((sum: number, order: any) => sum + parseFloat(order.total?.replace('$', '') || '0'), 0) / orders.length) : 0,
     monthlyGrowth: 15.2,
     productsTrend: 8.5,
     ordersTrend: 12.3,
@@ -374,7 +376,7 @@ const FarmerDashboard = () => {
           organic: newProduct.organic,
           featured: newProduct.featured,
           description: newProduct.description,
-          stock: parseInt(newProduct.stock) || 0
+          stock: typeof newProduct.stock === 'string' ? parseInt(newProduct.stock) : (newProduct.stock || 0),
         }),
       });
       if (response.ok) {
@@ -384,7 +386,7 @@ const FarmerDashboard = () => {
           const product = {
             id: result.product.id,
             ...newProduct,
-            stock: parseInt(newProduct.stock) || 0,
+            stock: typeof newProduct.stock === 'string' ? parseInt(newProduct.stock) : (newProduct.stock || 0),
             status: 'active',
             farmer: farmerData?.username || 'Unknown Farmer',
             image: newProduct.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(newProduct.name)}`
@@ -422,7 +424,7 @@ const FarmerDashboard = () => {
       const product = {
         id: products.length + 1,
         ...newProduct,
-        stock: parseInt(newProduct.stock) || 0,
+        stock: typeof newProduct.stock === 'string' ? parseInt(newProduct.stock) : (newProduct.stock || 0),
         status: 'active',
         farmer: farmerData?.username || 'Unknown Farmer',
         image: newProduct.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(newProduct.name)}`
@@ -450,12 +452,13 @@ const FarmerDashboard = () => {
     }
   };
 
-  const handleEditProduct = (product) => {
+  const handleEditProduct = (product: FarmerProduct) => {
     setSelectedProduct(product);
     setShowEditProductModal(true);
   };
 
   const handleUpdateProduct = () => {
+    if (!selectedProduct) return;
     setProducts(products.map(product =>
       product.id === selectedProduct.id ? selectedProduct : product
     ));
@@ -468,7 +471,7 @@ const FarmerDashboard = () => {
     });
   };
 
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = (productId: number) => {
     setProducts(products.filter(product => product.id !== productId));
     toast({
       title: 'Product deleted',
@@ -476,7 +479,7 @@ const FarmerDashboard = () => {
     });
   };
 
-  const handleToggleProductStatus = (productId) => {
+  const handleToggleProductStatus = (productId: number) => {
     const productToUpdate = products.find(product => product.id === productId);
     if (!productToUpdate) return;
 
@@ -804,7 +807,7 @@ const FarmerDashboard = () => {
                           <TableCell>{product.category}</TableCell>
                           <TableCell>{product.price}</TableCell>
                           <TableCell>
-                            <Badge variant={product.stock > 50 ? 'default' : product.stock > 20 ? 'secondary' : 'destructive'}>
+                            <Badge variant={((typeof product.stock === 'number' ? product.stock : parseInt(product.stock || '0')) > 50) ? 'default' : ((typeof product.stock === 'number' ? product.stock : parseInt(product.stock || '0')) > 20) ? 'secondary' : 'destructive'}>
                               {product.stock} units
                             </Badge>
                           </TableCell>

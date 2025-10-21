@@ -194,7 +194,7 @@ const SignUpPage = () => {
 
     const success = await verifyOTP(
       data.otp,
-      signupType,
+      signupType as 'email' | 'sms',
       signupType === 'email' ? userEmail : undefined,
       signupType === 'phone' ? userPhone : undefined
     );
@@ -260,7 +260,7 @@ const SignUpPage = () => {
     // Try real OTP verification
     const success = await verifyOTP(
       otpValue,
-      signupType,
+      signupType as 'email' | 'sms',
       signupType === 'email' ? userEmail : undefined,
       signupType === 'phone' ? userPhone : undefined
     );
@@ -284,9 +284,9 @@ const SignUpPage = () => {
   
   const handleResendOTP = async () => {
     const success = await resendOTP(
-      signupType === 'email' ? userEmail : undefined,
-      signupType === 'phone' ? userPhone : undefined,
-      signupType
+      signupType === 'email' ? userEmail : '',
+      signupType === 'phone' ? userPhone : '',
+      signupType as 'email' | 'sms'
     );
     // Success/error messages are handled in the resendOTP function
   };

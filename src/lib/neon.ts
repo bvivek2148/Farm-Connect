@@ -25,7 +25,7 @@ export const sql = neon(connectionString, {
 });
 
 // Create Drizzle database instance with proper typing
-export const neonDb: NeonHttpDatabase<typeof schema> = drizzle(sql, { schema });
+export const neonDb = drizzle(sql as any, { schema }) as NeonHttpDatabase<typeof schema>;
 
 // Helper function to test Neon connection
 export async function testNeonConnection() {

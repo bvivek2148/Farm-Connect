@@ -81,9 +81,9 @@ export const rateLimiters = {
       message: 'Too many admin operations, please slow down.',
       retryAfter: '1 minute'
     },
-    skip: (req) => {
+    skip: (req: Request) => {
       // Skip rate limiting for verified admin users
-      return req.user?.role === 'admin' && req.user?.isVerified;
+      return !!(req.user?.role === 'admin' && req.user?.isVerified);
     }
   })
 };
@@ -240,7 +240,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
   
-  const sessionId = req.sessionID || req.ip;
+  const sessionId = (req as any).sessionID || req.ip;
   const token = req.headers['x-csrf-token'] || req.body._csrf;
   
   if (!token || !verifyCSRFToken(sessionId, token as string)) {
@@ -407,20 +407,22 @@ export function ipFilterMiddleware(req: Request, res: Response, next: NextFuncti
   // Check blacklist
   if (blacklistedIPs.has(clientIP)) {
     console.warn(`Blocked request from blacklisted IP: ${clientIP}`);
-    return res.status(403).json({
+    res.status(403).json({
       success: false,
       message: 'Access denied'
     });
+    return;
   }
   
   // If whitelist exists and IP is not whitelisted (for admin endpoints)
   if (whitelistedIPs.size > 0 && req.path.startsWith('/api/admin/')) {
     if (!whitelistedIPs.has(clientIP)) {
       console.warn(`Blocked admin request from non-whitelisted IP: ${clientIP}`);
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         message: 'Admin access not allowed from this IP'
       });
+      return;
     }
   }
   

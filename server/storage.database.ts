@@ -162,9 +162,14 @@ export class DatabaseStorage implements IStorage {
 
   // Chat-related methods
   async createChatMessage(message: InsertMessage): Promise<ChatMessage> {
+    // Convert userId to number if string, or null if not provided
+    const numericUserId = message.userId 
+      ? (typeof message.userId === 'number' ? message.userId : parseInt(message.userId, 10))
+      : null;
+    
     const messageData = {
       sessionId: message.sessionId,
-      userId: message.userId || null,
+      userId: numericUserId || undefined,
       senderType: message.senderType,
       content: message.content
     };
@@ -182,6 +187,29 @@ export class DatabaseStorage implements IStorage {
       .from(chatMessages)
       .where(eq(chatMessages.sessionId, sessionId))
       .orderBy(chatMessages.createdAt);
+  }
+
+  // Notification-related methods (stub implementations)
+  async createNotification(notification: any): Promise<any> {
+    // TODO: Implement with proper notification table
+    console.log('📝 Creating notification:', notification);
+    return { id: Math.random(), ...notification, createdAt: new Date() };
+  }
+
+  async getUnreadNotifications(userId: number): Promise<any[]> {
+    // TODO: Implement with proper notification table
+    console.log('📖 Getting unread notifications for user:', userId);
+    return [];
+  }
+
+  async markNotificationAsRead(notificationId: number, userId: number): Promise<void> {
+    // TODO: Implement with proper notification table
+    console.log('✅ Marking notification as read:', notificationId, 'for user:', userId);
+  }
+
+  async deleteOldNotifications(beforeDate: Date): Promise<void> {
+    // TODO: Implement with proper notification table
+    console.log('🗑️ Deleting old notifications before:', beforeDate);
   }
 }
 

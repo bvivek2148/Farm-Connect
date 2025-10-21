@@ -53,19 +53,21 @@ export function validateInput(req: Request, res: Response, next: NextFunction): 
   // Check for SQL injection
   if (sqlInjectionPatterns.some(pattern => pattern.test(allInput))) {
     console.warn(`🚨 Potential SQL injection attempt from ${req.ip}: ${allInput.substring(0, 100)}`);
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: 'Invalid input detected'
     });
+    return;
   }
 
   // Check for XSS
   if (xssPatterns.some(pattern => pattern.test(allInput))) {
     console.warn(`🚨 Potential XSS attempt from ${req.ip}: ${allInput.substring(0, 100)}`);
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: 'Invalid input detected'
     });
+    return;
   }
 
   next();
@@ -97,11 +99,12 @@ export function loginRateLimit(req: Request, res: Response, next: NextFunction):
     const remainingMinutes = Math.ceil((attempts.blockUntil - now) / 60000);
     console.warn(`🚨 Login rate limit exceeded for IP: ${ip}`);
     
-    return res.status(429).json({
+    res.status(429).json({
       success: false,
       message: `Too many login attempts. Please try again in ${remainingMinutes} minutes.`,
       retryAfter: remainingMinutes
     });
+    return;
   }
   
   attempts.count++;
@@ -113,11 +116,12 @@ export function loginRateLimit(req: Request, res: Response, next: NextFunction):
     
     console.warn(`🚨 Login rate limit exceeded for IP: ${ip}`);
     
-    return res.status(429).json({
+    res.status(429).json({
       success: false,
       message: `Too many login attempts. Please try again in ${remainingMinutes} minutes.`,
       retryAfter: remainingMinutes
     });
+    return;
   }
   
   next();
@@ -149,11 +153,12 @@ export function adminRateLimit(req: Request, res: Response, next: NextFunction):
     const remainingMinutes = Math.ceil((attempts.blockUntil - now) / 60000);
     console.warn(`🚨 Admin rate limit exceeded for user: ${req.user?.username} (${req.ip})`);
     
-    return res.status(429).json({
+    res.status(429).json({
       success: false,
       message: `Too many admin operations. Please try again in ${remainingMinutes} minutes.`,
       retryAfter: remainingMinutes
     });
+    return;
   }
   
   attempts.count++;
@@ -165,11 +170,12 @@ export function adminRateLimit(req: Request, res: Response, next: NextFunction):
     
     console.warn(`🚨 Admin rate limit exceeded for user: ${req.user?.username} (${req.ip})`);
     
-    return res.status(429).json({
+    res.status(429).json({
       success: false,
       message: `Too many admin operations. Please try again in ${remainingMinutes} minutes.`,
       retryAfter: remainingMinutes
     });
+    return;
   }
   
   next();

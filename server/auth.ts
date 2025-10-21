@@ -26,7 +26,7 @@ export async function comparePassword(password: string, hashedPassword: string):
 }
 
 // Generate JWT token with enhanced user data
-export function generateToken(user: { id: number; username: string; role: string; email: string; firstName?: string; lastName?: string; isVerified?: boolean; }): string {
+export function generateToken(user: { id: number | string; username: string; role: string; email: string; firstName?: string | null; lastName?: string | null; isVerified?: boolean; }): string {
   return jwt.sign(
     { 
       userId: user.id,
@@ -439,7 +439,8 @@ export async function currentUserHandler(req: Request, res: Response): Promise<v
       });
       return;
     }
-    const user = await storage.getUser(userId);
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    const user = await storage.getUser(numericUserId);
 
     if (!user) {
       res.status(404).json({

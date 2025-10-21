@@ -106,13 +106,13 @@ async function syncUserWithNeon(authUser: AuthUser, additionalData?: Partial<Use
       
       if (result.length > 0) {
         console.log('✅ User exists in Neon database');
-        return formatUser(result[0]);
+        return formatUser(result[0] as any);
       }
     } catch (queryError) {
       console.error('⚠️ Neon query error:', queryError);
       // Fall back to Supabase user data
       console.log('🔄 Falling back to Supabase user data');
-      return userData;
+      return userData as User;
     }
 
     // Create user in Neon database
@@ -126,12 +126,12 @@ async function syncUserWithNeon(authUser: AuthUser, additionalData?: Partial<Use
       `;
       
       console.log('✅ User created in Neon database');
-      return formatUser(result[0]);
+      return formatUser(result[0] as any);
     } catch (insertError) {
       console.error('⚠️ Neon insert error:', insertError);
       // Fall back to Supabase user data
       console.log('🔄 Falling back to Supabase user data after insert failure');
-      return userData;
+      return userData as User;
     }
   } catch (error) {
     console.error('❌ Error creating user profile:', error);
@@ -197,7 +197,7 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             const neonUser = await syncUserWithNeon(session.user);
             if (neonUser) {
               console.log('✅ User synced with Neon:', neonUser.email, neonUser.role);
-              setUser(neonUser);
+              setUser(neonUser as User);
             } else {
               console.error('Failed to sync user with Neon');
             }
@@ -418,9 +418,9 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const { data, error } = await supabase.auth.verifyOtp({
         token,
         type: type === 'email' ? 'email' : 'sms',
-        email,
-        phone,
-      });
+        ...(email && { email }),
+        ...(phone && { phone }),
+      } as any);
 
       if (error) {
         toast({
@@ -455,13 +455,14 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const resendOTP = async (email?: string, phone?: string, type: 'email' | 'sms' = 'email'): Promise<boolean> => {
+  const resendOTP = async (email: string = '', phone: string = '', type: 'email' | 'sms' = 'email'): Promise<boolean> => {
     try {
+      const authType = type || 'email';
       const { error } = await supabase.auth.resend({
-        type: type === 'email' ? 'signup' : 'sms',
-        email: type === 'email' ? email : undefined,
-        phone: type === 'sms' ? phone : undefined,
-      });
+        type: authType === 'email' ? 'signup' : 'sms',
+        ...(authType === 'email' && email && { email }),
+        ...(authType === 'sms' && phone && { phone }),
+      } as any);
 
       if (error) {
         toast({

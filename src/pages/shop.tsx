@@ -100,9 +100,10 @@ const ShopPage = () => {
         setError(null);
         
         const result = await ApiService.getProducts();
-        if (result.success) {
+        const anyResult = result as any;
+        if (anyResult.success) {
           // Transform API products to match component structure
-          const apiProducts = result.products.map(product => ({
+          const apiProducts = (anyResult.products || []).map((product: any) => ({
             id: product.id,
             name: product.name,
             category: product.category.toLowerCase(),
@@ -123,6 +124,7 @@ const ShopPage = () => {
       } catch (error: any) {
         console.error('Error fetching products:', error);
         // For network errors or server issues, show empty state instead of error
+        const result = error as unknown;
         setError(null);
         setProducts([]);
       } finally {

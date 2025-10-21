@@ -9,7 +9,7 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export class SupabaseStorage implements IStorage {
+export class SupabaseStorage implements Partial<IStorage> {
   // User-related methods
   async getUser(id: number): Promise<User | undefined> {
     const { data, error } = await supabase

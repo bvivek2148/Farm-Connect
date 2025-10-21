@@ -80,11 +80,10 @@ export async function syncFirebaseUser(firebaseUser: any) {
       user = await storage.createUser({
         username: firebaseUser.email.split('@')[0] + '_firebase_' + firebaseUser.uid,
         email: firebaseUser.email,
-        password: '', // Firebase users don't have password
-        firstName: firstName || '',
-        lastName: lastName || '',
+        password: 'firebase_oauth_' + Date.now(), // Firebase users don't have password
+        firstName: firstName || null,
+        lastName: lastName || null,
         role,
-        isVerified: firebaseUser.emailVerified || false,
       });
 
       console.log('✅ Created new user from Firebase:', user.username);

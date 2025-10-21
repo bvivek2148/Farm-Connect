@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
         });
       }
 
-      const newAdmin = await createAdminUser(username, email, password, req.user?.userId || 0);
+      const newAdmin = await createAdminUser(username, email, password, (req.user?.userId as number) || 0);
       
       res.status(201).json({
         success: true,
@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
       }
       const productData = {
         ...validatedData,
-        farmerId: userId,
+        farmerId: typeof userId === 'string' ? parseInt(userId, 10) : userId,
         farmer: username
       };
 
@@ -405,6 +405,13 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   // Order/Checkout API endpoint
   app.post("/api/orders", authenticate, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated"
+        });
+      }
+
       const orderData = req.body;
 
       // Validate required fields

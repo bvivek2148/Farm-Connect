@@ -113,7 +113,7 @@ async function syncUserProfile(authUser: AuthUser, additionalData?: Partial<User
 }
 
 // Helper function to convert auth user to our User type
-function formatUser(authUser: AuthUser, profile?: SupabaseUser): User {
+function formatUser(authUser: AuthUser, profile: SupabaseUser | null = null): User {
   return {
     id: authUser.id,
     email: authUser.email!,
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (error) {
             console.error('Error syncing user profile:', error);
             // Still set user even if profile sync fails
-            const formattedUser = formatUser(session.user, null);
+            const formattedUser = formatUser(session.user);
             setUser(formattedUser);
           }
         } else {
@@ -174,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
       console.log('🚀 Starting Supabase login process...');
-      console.log('Using URL:', supabase.supabaseUrl);
+      console.log('Using Supabase client');
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
@@ -370,9 +370,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.verifyOtp({
         token,
         type: type === 'email' ? 'email' : 'sms',
-        email,
-        phone,
-      });
+        ...(email && { email }),
+        ...(phone && { phone }),
+      } as any);
 
       if (error) {
         toast({
@@ -405,13 +405,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resendOTP = async (email?: string, phone?: string, type: 'email' | 'sms' = 'email'): Promise<boolean> => {
+  const resendOTP = async (email: string = '', phone: string = '', type: 'email' | 'sms' = 'email'): Promise<boolean> => {
     try {
+      const authType = type || 'email';
       const { error } = await supabase.auth.resend({
-        type: type === 'email' ? 'signup' : 'sms',
-        email: type === 'email' ? email : undefined,
-        phone: type === 'sms' ? phone : undefined,
-      });
+        type: authType === 'email' ? 'signup' : 'sms',
+        ...(authType === 'email' && email && { email }),
+        ...(authType === 'sms' && phone && { phone }),
+      } as any);
 
       if (error) {
         toast({

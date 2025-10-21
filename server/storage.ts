@@ -29,6 +29,12 @@ export interface IStorage {
   // Chat operations
   createChatMessage(message: InsertMessage): Promise<ChatMessage>;
   getChatHistory(sessionId: string): Promise<ChatMessage[]>;
+  
+  // Notification operations
+  createNotification(notification: any): Promise<any>;
+  getUnreadNotifications(userId: number): Promise<any[]>;
+  markNotificationAsRead(notificationId: number, userId: number): Promise<void>;
+  deleteOldNotifications(beforeDate: Date): Promise<void>;
 }
 
 // Using Neon database storage

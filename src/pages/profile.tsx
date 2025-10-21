@@ -143,7 +143,7 @@ const ProfilePage = () => {
                   </div>
                   <div>
                     <CardTitle className="text-2xl">
-                      {user?.firstName && user?.lastName 
+                      {user && user.firstName && user.lastName 
                         ? `${user.firstName} ${user.lastName}` 
                         : user?.username}
                     </CardTitle>
@@ -156,7 +156,7 @@ const ProfilePage = () => {
                 <div className="flex items-center space-x-2">
                   <Badge className={getRoleBadgeColor(user?.role || 'customer')}>
                     <Shield className="h-3 w-3 mr-1" />
-                    {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+                    {user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'User'}
                   </Badge>
                 </div>
               </div>
