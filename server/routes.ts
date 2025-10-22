@@ -176,17 +176,23 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req, res) => {
     try {
-      console.log('🛒 GET /api/products - Fetching products...');
+      console.log('🛍 GET /api/products - Fetching products...');
       const { category } = req.query;
 
       // If category query parameter is provided, filter products by category
-      let products;
-      if (category && typeof category === 'string') {
-        console.log(`📋 Filtering products by category: ${category}`);
-        products = await storage.getProductsByCategory(category);
-      } else {
-        console.log('📋 Fetching all products');
-        products = await storage.getAllProducts();
+      let products: any[] = [];
+      try {
+        if (category && typeof category === 'string') {
+          console.log(`📋 Filtering products by category: ${category}`);
+          products = await storage.getProductsByCategory(category);
+        } else {
+          console.log('📋 Fetching all products');
+          products = await storage.getAllProducts();
+        }
+      } catch (dbError: any) {
+        console.error('⚠️ Database query failed:', dbError?.message);
+        // Return empty products array as fallback
+        products = [];
       }
 
       console.log(`✅ Fetched ${products.length} products from database`);
