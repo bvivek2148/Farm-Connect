@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { StatisticsProvider } from "@/context/StatisticsContext";
 import { HybridAuthProvider } from "@/context/HybridAuthContext";
+import { SocketProvider } from "@/context/SocketContext";
 import ChatWidget from "@/components/chat/ChatWidget";
 
 // Lazy load pages for better performance
@@ -69,15 +70,17 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <HybridAuthProvider>
-        <TooltipProvider>
-          <StatisticsProvider>
-            <CartProvider>
-              <Toaster />
-              <Router />
-              <ChatWidget />
-            </CartProvider>
-          </StatisticsProvider>
-        </TooltipProvider>
+        <SocketProvider>
+          <TooltipProvider>
+            <StatisticsProvider>
+              <CartProvider>
+                <Toaster />
+                <Router />
+                <ChatWidget />
+              </CartProvider>
+            </StatisticsProvider>
+          </TooltipProvider>
+        </SocketProvider>
       </HybridAuthProvider>
     </QueryClientProvider>
   );

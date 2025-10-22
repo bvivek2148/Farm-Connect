@@ -23,6 +23,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSocket } from '@/context/SocketContext';
 
 interface Notification {
   id: string;
@@ -101,8 +102,87 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   const [notifications, setNotifications] = useState<Notification[]>(sampleNotifications);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { socket, isConnected } = useSocket();
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Listen for real-time admin notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for new user registrations
+    socket.on('admin:new-user', (data: any) => {
+      console.log('🔔 New user notification:', data);
+      const newNotification: Notification = {
+        id: `user-${data.id}-${Date.now()}`,
+        type: 'user_registration',
+        title: 'New User Registration',
+        message: `${data.email} registered via ${data.provider}`,
+        timestamp: new Date(data.timestamp || Date.now()),
+        read: false,
+        priority: 'medium',
+        data: { userId: data.id, email: data.email, provider: data.provider }
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+      
+      // Show toast
+      toast({
+        title: '🎉 New User Registered',
+        description: `${data.email} just joined!`,
+      });
+    });
+
+    // Listen for new orders
+    socket.on('admin:new-order', (data: any) => {
+      console.log('🔔 New order notification:', data);
+      const newNotification: Notification = {
+        id: `order-${data.orderId}-${Date.now()}`,
+        type: 'new_order',
+        title: 'New Order Placed',
+        message: `Order #${data.orderId} - $${data.total}`,
+        timestamp: new Date(data.timestamp || Date.now()),
+        read: false,
+        priority: 'medium',
+        data: { orderId: data.orderId, amount: data.total }
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+      
+      toast({
+        title: '🛒 New Order',
+        description: `Order #${data.orderId} received!`,
+      });
+    });
+
+    // Listen for farmer applications
+    socket.on('admin:farmer-application', (data: any) => {
+      console.log('🔔 Farmer application notification:', data);
+      const newNotification: Notification = {
+        id: `farmer-${data.userId}-${Date.now()}`,
+        type: 'farmer_application',
+        title: 'New Farmer Application',
+        message: `${data.name} applied for farmer role`,
+        timestamp: new Date(data.timestamp || Date.now()),
+        read: false,
+        priority: 'high',
+        data: { userId: data.userId, name: data.name }
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
+      
+      toast({
+        title: '🌾 New Farmer Application',
+        description: `${data.name} wants to become a farmer`,
+      });
+    });
+
+    return () => {
+      socket.off('admin:new-user');
+      socket.off('admin:new-order');
+      socket.off('admin:farmer-application');
+    };
+  }, [socket, toast]);
 
   useEffect(() => {
     onNotificationCountChange?.(unreadCount);
