@@ -39,7 +39,7 @@ const AdminLogin = () => {
       if (!username.trim() || !password.trim()) {
         toast({
           title: 'Validation Error',
-          description: 'Please enter both username and email',
+          description: 'Please enter both username/email and password',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -117,16 +117,17 @@ const AdminLogin = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Username or Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                   id="username"
-                  placeholder="FC-admin"
+                  placeholder="Enter username or email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"
                   required
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -137,11 +138,12 @@ const AdminLogin = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
                   required
+                  autoComplete="off"
                 />
                 <button
                   type="button"

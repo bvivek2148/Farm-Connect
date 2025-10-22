@@ -6,8 +6,15 @@ import { sendAdminCredentialsEmail } from './email';
 export async function initializeAdmin() {
   try {
     console.log('🔍 Checking if admin user exists...');
-    // Check if admin user already exists
-    const existingAdmin = await storage.getUserByUsername('FC-admin');
+    
+    // Try to check if admin user already exists
+    let existingAdmin;
+    try {
+      existingAdmin = await storage.getUserByUsername('FC-admin');
+    } catch (dbError: any) {
+      console.warn('⚠️  Could not check admin user (database may not be ready):', dbError?.message);
+      return null;
+    }
     
     if (existingAdmin) {
       console.log('✅ Admin user already exists (ID:', existingAdmin.id, ')');
@@ -23,14 +30,20 @@ export async function initializeAdmin() {
     // Create admin user with hashed password
     const hashedPassword = await hashPassword(adminPassword);
     
-    const adminUser = await storage.createUser({
-      username: 'FC-admin',
-      email: adminEmail,
-      password: hashedPassword,
-      firstName: 'Farm Connect',
-      lastName: 'Administrator',
-      role: 'admin'
-    });
+    let adminUser;
+    try {
+      adminUser = await storage.createUser({
+        username: 'FC-admin',
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: 'Farm Connect',
+        lastName: 'Administrator',
+        role: 'admin'
+      });
+    } catch (createError: any) {
+      console.warn('⚠️  Could not create admin user:', createError?.message);
+      return null;
+    }
 
     console.log('🔐 Admin user created successfully!');
     console.log(`   ID: ${adminUser.id}`);
@@ -40,12 +53,17 @@ export async function initializeAdmin() {
     
     // Send credentials email
     console.log('📧 Sending admin credentials email...');
-    const emailSent = await sendAdminCredentialsEmail('FC-admin', adminEmail, adminPassword);
-    if (emailSent) {
-      console.log('✅ Admin credentials email sent successfully');
-    } else {
-      console.warn('⚠️  Email sending failed - ensure EMAIL_PASSWORD is set in .env');
-      console.warn('   You can still use FC-admin/FC-admin.5 to login to the admin portal');
+    try {
+      const emailSent = await sendAdminCredentialsEmail('FC-admin', adminEmail, adminPassword);
+      if (emailSent) {
+        console.log('✅ Admin credentials email sent successfully');
+      } else {
+        console.warn('⚠️  Email sending failed - ensure EMAIL_PASSWORD is set in .env');
+        console.warn('   You can still use FC-admin/FC-admin.5 to login to the admin portal');
+      }
+    } catch (emailError: any) {
+      console.warn('⚠️  Email notification failed:', emailError?.message);
+      // Continue anyway - admin was created successfully
     }
 
     return adminUser;

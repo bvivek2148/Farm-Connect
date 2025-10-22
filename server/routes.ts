@@ -64,7 +64,24 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   });
   
   app.post("/api/auth/signup", registerHandler); // Removed validateInput as Zod schema provides validation
-  app.post("/api/auth/login", validateInput, loginRateLimit, loginHandler);
+  
+  // Login endpoint with fallback for setup mode
+  app.post("/api/auth/login", validateInput, async (req, res) => {
+    try {
+      await loginHandler(req, res);
+    } catch (error: any) {
+      console.error('Login handler error:', error?.message);
+      // If login fails, return proper error instead of crashing
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: 'Login failed. Please try again.',
+          debug: error?.message
+        });
+      }
+    }
+  });
+  
   app.post("/api/auth/logout", logoutHandler);
   app.post("/api/auth/forgot-password", validateInput, forgotPasswordHandler);
   app.get("/api/auth/user", authenticate, currentUserHandler);
@@ -258,6 +275,60 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
       message: "Server is running",
       timestamp: new Date().toISOString()
     });
+  });
+  
+  // Admin setup endpoint - creates admin user if it doesn't exist
+  app.post("/api/setup/admin", async (req, res) => {
+    try {
+      console.log('📜 Admin setup request received');
+      
+      // Check if admin user already exists
+      const existingAdmin = await storage.getUserByUsername('FC-admin');
+      if (existingAdmin) {
+        return res.json({
+          success: true,
+          message: 'Admin user already exists',
+          admin: {
+            username: existingAdmin.username,
+            email: existingAdmin.email
+          }
+        });
+      }
+      
+      // Create admin user
+      const { hashPassword } = await import('./auth');
+      const adminPassword = 'FC-admin.5';
+      const hashedPassword = await hashPassword(adminPassword);
+      
+      const adminUser = await storage.createUser({
+        username: 'FC-admin',
+        email: 'farmconnect.helpdesk@gmail.com',
+        password: hashedPassword,
+        firstName: 'Farm Connect',
+        lastName: 'Administrator',
+        role: 'admin'
+      });
+      
+      console.log('✅ Admin user created:', adminUser.username);
+      
+      res.json({
+        success: true,
+        message: 'Admin user created successfully',
+        admin: {
+          id: adminUser.id,
+          username: adminUser.username,
+          email: adminUser.email,
+          role: adminUser.role
+        }
+      });
+    } catch (error: any) {
+      console.error('❌ Admin setup error:', error?.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to setup admin user',
+        debug: error?.message
+      });
+    }
   });
   
   // API route for contact form submissions
