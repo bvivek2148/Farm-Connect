@@ -1,29 +1,40 @@
 import nodemailer from 'nodemailer';
 import { Contact } from '../shared/schema';
 
-// Email configuration
+// Simple email configuration
 const EMAIL_CONFIG = {
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'farmconnect.helpdesk@gmail.com',
-    pass: process.env.EMAIL_PASSWORD || '' // App password for Gmail
+    user: 'farmconnect.helpdesk@gmail.com',
+    pass: 'ncxo ujdp vihx aogw' // Gmail app password
   }
 };
 
 // Create transporter
 const createTransporter = () => {
-  return nodemailer.createTransport(EMAIL_CONFIG as any);
+  return nodemailer.createTransport(EMAIL_CONFIG);
 };
+
+// Test email on startup
+const transporter = createTransporter();
+transporter.verify((error: any, success: boolean) => {
+  if (error) {
+    console.error('❌ Email configuration error:', error.message);
+  } else if (success) {
+    console.log('✅ Email transporter verified and ready to send to farmconnect.helpdesk@gmail.com');
+  }
+});
 
 // Send contact form notification email
 export async function sendContactFormNotification(contact: Contact): Promise<boolean> {
   try {
-    const transporter = createTransporter();
+    const helpdeskEmail = 'farmconnect.helpdesk@gmail.com';
+    console.log('📧 Processing contact form submission from:', contact.email);
     
     // Email to admin/support team
     const adminMailOptions = {
       from: `"Farm Connect" <${EMAIL_CONFIG.auth.user}>`,
-      to: 'farmconnect.helpdesk@gmail.com',
+      to: helpdeskEmail,
       subject: `New Contact Form Submission - ${contact.name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -118,13 +129,33 @@ export async function sendContactFormNotification(contact: Contact): Promise<boo
     };
 
     // Send both emails
+    console.log('📧 Sending admin notification email to:', helpdeskEmail);
     await transporter.sendMail(adminMailOptions);
-    await transporter.sendMail(autoReplyOptions);
+    console.log('✅ Admin notification email sent successfully');
     
-    console.log(`Contact form notification sent successfully for ${contact.name}`);
+    console.log('📧 Sending auto-reply email to:', contact.email);
+    await transporter.sendMail(autoReplyOptions);
+    console.log('✅ Auto-reply email sent successfully');
+    
+    console.log(`🎆 Contact form notification completed for ${contact.name}`);
     return true;
-  } catch (error) {
-    console.error('Error sending contact form notification:', error);
+  } catch (error: any) {
+    console.error('❌ Error sending contact form notification:', error);
+    console.error('🔍 Error details:', {
+      message: error?.message,
+      code: error?.code,
+      responseCode: error?.responseCode,
+      command: error?.command
+    });
+    
+    // Check for common errors
+    if (error?.message?.includes('Password')) {
+      console.error('🚨 Possible authentication error - check EMAIL_PASSWORD');
+    }
+    if (error?.message?.includes('ENOTFOUND') || error?.message?.includes('connect')) {
+      console.error('🚨 Network error - cannot connect to email server');
+    }
+    
     return false;
   }
 }
@@ -196,6 +227,90 @@ export async function sendWelcomeEmail(userEmail: string, username: string, role
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
+    return false;
+  }
+}
+
+// Send admin credentials confirmation email
+export async function sendAdminCredentialsEmail(username: string, email: string, password: string): Promise<boolean> {
+  try {
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: `"Farm Connect" <${EMAIL_CONFIG.auth.user}>`,
+      to: email,
+      subject: 'Farm Connect Admin Portal - Access Credentials',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #ef4444, #dc2626); padding: 20px; text-align: center;">
+            <h1 style="color: white; margin: 0;">🔐 Farm Connect Admin Portal</h1>
+            <p style="color: white; margin: 5px 0 0 0;">Secure Access Credentials</p>
+          </div>
+          
+          <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb;">
+            <h2 style="color: #1f2937; margin-top: 0;">Admin Account Created</h2>
+            
+            <p style="line-height: 1.6; color: #4b5563;">
+              Your Farm Connect admin account has been successfully created. You now have full access to the admin portal.
+            </p>
+            
+            <div style="background: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+              <h3 style="margin-top: 0; color: #991b1b;">Your Login Credentials:</h3>
+              <p style="margin: 10px 0;"><strong>Username:</strong> <code style="background: white; padding: 5px 10px; border-radius: 4px;">${username}</code></p>
+              <p style="margin: 10px 0;"><strong>Email:</strong> <code style="background: white; padding: 5px 10px; border-radius: 4px;">${email}</code></p>
+              <p style="margin: 10px 0;"><strong>Password:</strong> <code style="background: white; padding: 5px 10px; border-radius: 4px;">${password}</code></p>
+            </div>
+            
+            <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+              <p style="margin: 0; color: #92400e;">
+                <strong>⚠️ Security Notice:</strong><br>
+                • Keep these credentials secure and confidential<br>
+                • Change your password after first login<br>
+                • Never share these credentials with unauthorized users<br>
+                • Delete this email after saving credentials securely
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://farm-connect-vivek-bukkas-projects.vercel.app/admin-login" 
+                 style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Go to Admin Login
+              </a>
+            </div>
+            
+            <div style="background: #e0e7ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #312e81;">Admin Portal Features:</h3>
+              <ul style="color: #3730a3; margin: 10px 0;">
+                <li>Manage users and roles</li>
+                <li>Monitor products and inventory</li>
+                <li>View system analytics</li>
+                <li>Manage site-wide settings</li>
+                <li>View and manage all orders</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div style="padding: 20px; text-align: center; background: #f3f4f6; color: #6b7280; font-size: 14px;">
+            <p>Best regards,<br>The Farm Connect System</p>
+            <p>🌱 Connecting farmers with conscious consumers</p>
+            <p>
+              <a href="https://farm-connect-vivek-bukkas-projects.vercel.app" style="color: #ef4444;">Visit Farm Connect</a> |
+              <a href="mailto:farmconnect.helpdesk@gmail.com" style="color: #ef4444;">Contact Support</a>
+            </p>
+            <p style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #d1d5db;">
+              <strong>Farm Connect Admin Team</strong><br>
+              farmconnect.helpdesk@gmail.com
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Admin credentials email sent successfully to ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending admin credentials email:', error);
     return false;
   }
 }

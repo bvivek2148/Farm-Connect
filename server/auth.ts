@@ -1,5 +1,5 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { loginUserSchema, registerUserSchema } from '../shared/schema';
 import { storage } from './storage';
@@ -190,9 +190,11 @@ export async function registerHandler(req: Request, res: Response): Promise<void
     // Check if username already exists
     const existingUser = await storage.getUserByUsername(validatedData.username);
     if (existingUser) {
+      console.warn(`Registration: Username '${validatedData.username}' already exists`);
       res.status(400).json({ 
         success: false, 
-        message: 'Username already exists. Please choose a different username.' 
+        message: 'Username already exists. Please choose a different username.',
+        field: 'username'
       });
       return;
     }
@@ -200,9 +202,11 @@ export async function registerHandler(req: Request, res: Response): Promise<void
     // Check if email already exists
     const existingEmail = await storage.getUserByEmail(validatedData.email);
     if (existingEmail) {
+      console.warn(`Registration: Email '${validatedData.email}' already exists`);
       res.status(400).json({ 
         success: false, 
-        message: 'Email address already in use. Please use a different email or sign in.' 
+        message: 'Email address already in use. Please use a different email or sign in.',
+        field: 'email'
       });
       return;
     }
@@ -252,10 +256,25 @@ export async function registerHandler(req: Request, res: Response): Promise<void
 
     // Handle database errors
     if (error.code === '23505') { // PostgreSQL unique constraint violation
-      res.status(400).json({
-        success: false,
-        message: 'Username or email already exists'
-      });
+      const message = error.message || '';
+      if (message.includes('username')) {
+        res.status(400).json({
+          success: false,
+          message: 'Username already exists. Please choose a different username.',
+          field: 'username'
+        });
+      } else if (message.includes('email')) {
+        res.status(400).json({
+          success: false,
+          message: 'Email address already in use. Please use a different email.',
+          field: 'email'
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'This username or email is already in use.'
+        });
+      }
       return;
     }
 
@@ -271,17 +290,18 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
   try {
     // Validate request body
     const validatedData = loginUserSchema.parse(req.body);
-
+    const input = validatedData.username.trim();
 
     // Find user by username or email
-    let user = await storage.getUserByUsername(validatedData.username);
+    let user = await storage.getUserByUsername(input);
 
     // If not found by username, try email
     if (!user) {
-      user = await storage.getUserByEmail(validatedData.username);
+      user = await storage.getUserByEmail(input);
     }
 
     if (!user) {
+      console.log(`Login attempt failed: User not found with username/email '${input}'`);
       res.status(401).json({
         success: false,
         message: 'Invalid username/email or password'
@@ -289,15 +309,20 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
       return;
     }
     
+    console.log(`Login attempt for user '${user.username}' (${user.email})`);
+    
     // Verify password
     const isPasswordValid = await comparePassword(validatedData.password, user.password);
     if (!isPasswordValid) {
+      console.warn(`Login failed: Invalid password for user '${user.username}'`);
       res.status(401).json({ 
         success: false, 
         message: 'Invalid username or password' 
       });
       return;
     }
+    
+    console.log(`✅ Login successful for user '${user.username}' with role '${user.role}'`);
     
     // Generate JWT token
     const token = generateToken({

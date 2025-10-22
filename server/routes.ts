@@ -30,7 +30,39 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   // Add middleware
   app.use(cookieParser());
   
-  // Auth routes with security middleware  
+  // Auth routes with security middleware
+  // Check username availability (public endpoint, rate limited)
+  app.post("/api/auth/check-username", validateInput, loginRateLimit, async (req, res) => {
+    try {
+      const { username } = req.body;
+      
+      if (!username || typeof username !== 'string' || username.trim().length < 3) {
+        res.status(400).json({
+          success: false,
+          message: 'Username must be at least 3 characters',
+          available: false
+        });
+        return;
+      }
+      
+      // Check if username exists in database
+      const existingUser = await storage.getUserByUsername(username.trim());
+      
+      res.json({
+        success: true,
+        available: !existingUser,
+        message: existingUser ? 'Username is taken' : 'Username is available'
+      });
+    } catch (error) {
+      console.error('Error checking username availability:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check username availability',
+        available: false
+      });
+    }
+  });
+  
   app.post("/api/auth/signup", registerHandler); // Removed validateInput as Zod schema provides validation
   app.post("/api/auth/login", validateInput, loginRateLimit, loginHandler);
   app.post("/api/auth/logout", logoutHandler);
@@ -213,38 +245,90 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
     }
   });
   
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({
+      success: true,
+      message: "Server is running",
+      timestamp: new Date().toISOString()
+    });
+  });
+  
   // API route for contact form submissions
   app.post("/api/contact", async (req, res) => {
     try {
+      console.log('📧 Contact form submission received:', {
+        name: req.body?.name,
+        email: req.body?.email,
+        timestamp: new Date().toISOString()
+      });
+      
       // Validate the request body
       const validatedData = insertContactValidationSchema.parse(req.body);
+      console.log('✅ Form data validated successfully');
 
-      // Save the contact form submission
-      const contact = await storage.createContactSubmission(validatedData);
+      // Create a contact object for email
+      const contact = {
+        id: Math.floor(Math.random() * 10000),
+        name: validatedData.name,
+        email: validatedData.email,
+        phone: validatedData.phone || null,
+        message: validatedData.message,
+        createdAt: new Date(),
+        status: 'new',
+        assignedTo: null
+      };
 
-      // Send email notification (don't wait for it to complete)
-      sendContactFormNotification(contact).catch(error => {
-        console.error("Failed to send contact form notification email:", error);
-      });
+      // Try to save to database (non-blocking)
+      storage.createContactSubmission(validatedData)
+        .then(dbContact => {
+          console.log('💾 Contact submission saved to database with ID:', dbContact.id);
+        })
+        .catch(dbError => {
+          console.error('⚠️ Database save failed (non-blocking):', dbError?.message);
+        });
+
+      // Send email notification
+      console.log('📬 Attempting to send email notifications...');
+      sendContactFormNotification(contact)
+        .then(success => {
+          if (success) {
+            console.log('✅ Email notifications sent successfully');
+          } else {
+            console.warn('⚠️ Email notifications failed to send - check EMAIL_PASSWORD configuration');
+          }
+        })
+        .catch(error => {
+          console.error('❌ Error during email notification:', error?.message);
+        });
 
       res.status(201).json({
         success: true,
-        message: "Contact form submitted successfully. We'll get back to you soon!",
-        data: contact
+        message: "Thank you for contacting Farm Connect! We've received your message and will respond to farmconnect.helpdesk@gmail.com within 24 hours.",
+        data: {
+          name: contact.name,
+          email: contact.email
+        }
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
+        console.error('Validation error:', error.format());
         return res.status(400).json({
           success: false,
-          message: "Invalid form data",
+          message: "Please fill in all required fields correctly",
           errors: error.format()
         });
       }
 
-      console.error("Error submitting contact form:", error);
+      console.error("❌ Error submitting contact form:", error);
+      console.error('Error stack:', error?.stack);
+      console.error('Error message:', error?.message);
+      console.error('Error code:', error?.code);
+      
       res.status(500).json({
         success: false,
-        message: "Failed to submit contact form. Please try again."
+        message: "Failed to submit contact form. Please try again later or contact us at farmconnect.helpdesk@gmail.com",
+        debug: process.env.NODE_ENV === 'development' ? error?.message : undefined
       });
     }
   });

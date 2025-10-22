@@ -1,26 +1,30 @@
 import { storage } from './storage';
 import { hashPassword } from './auth';
+import { sendAdminCredentialsEmail } from './email';
 
 // Admin initialization system
 export async function initializeAdmin() {
   try {
+    console.log('🔍 Checking if admin user exists...');
     // Check if admin user already exists
-    const existingAdmin = await storage.getUserByUsername('admin');
+    const existingAdmin = await storage.getUserByUsername('FC-admin');
     
     if (existingAdmin) {
-      console.log('✅ Admin user already exists');
-      return;
+      console.log('✅ Admin user already exists (ID:', existingAdmin.id, ')');
+      console.log(`📧 Email: ${existingAdmin.email}`);
+      return existingAdmin;
     }
 
-    // Generate secure admin credentials
-    const adminPassword = process.env.ADMIN_PASSWORD || generateSecurePassword();
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@farmconnect.local';
+    console.log('📝 Creating new admin user...');
+    // Set fixed admin credentials
+    const adminPassword = process.env.ADMIN_PASSWORD || 'FC-admin.5';
+    const adminEmail = 'farmconnect.helpdesk@gmail.com';
 
     // Create admin user with hashed password
     const hashedPassword = await hashPassword(adminPassword);
     
     const adminUser = await storage.createUser({
-      username: 'admin',
+      username: 'FC-admin',
       email: adminEmail,
       password: hashedPassword,
       firstName: 'Farm Connect',
@@ -29,20 +33,26 @@ export async function initializeAdmin() {
     });
 
     console.log('🔐 Admin user created successfully!');
-    console.log(`📧 Admin Email: ${adminEmail}`);
+    console.log(`   ID: ${adminUser.id}`);
+    console.log(`📧 Email: ${adminEmail}`);
+    console.log(`👤 Username: FC-admin`);
+    console.log('⚠️  Store these credentials securely!');
     
-    // Only show password in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔑 Admin Password: ${adminPassword}`);
-      console.log('⚠️  Please save these credentials securely!');
+    // Send credentials email
+    console.log('📧 Sending admin credentials email...');
+    const emailSent = await sendAdminCredentialsEmail('FC-admin', adminEmail, adminPassword);
+    if (emailSent) {
+      console.log('✅ Admin credentials email sent successfully');
     } else {
-      console.log('🔑 Admin password was set from ADMIN_PASSWORD environment variable');
+      console.warn('⚠️  Email sending failed - ensure EMAIL_PASSWORD is set in .env');
+      console.warn('   You can still use FC-admin/FC-admin.5 to login to the admin portal');
     }
 
     return adminUser;
   } catch (error) {
     console.error('❌ Failed to initialize admin user:', error);
-    throw error;
+    console.error('⚠️  Admin user may not have been created - you can login with FC-admin/FC-admin.5 in setup mode');
+    // Don't throw - allow server to continue without admin user
   }
 }
 

@@ -39,23 +39,37 @@ const AdminLogin = () => {
       if (!username.trim() || !password.trim()) {
         toast({
           title: 'Validation Error',
-          description: 'Please enter both username and password',
+          description: 'Please enter both username and email',
           variant: 'destructive',
         });
         setIsLoading(false);
         return;
       }
 
-      // Check for admin credentials
-      if (username.trim() === 'admin' && password === '123456') {
+      // Call actual login API for other credentials
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success && data.user?.role === 'admin') {
         // Store admin auth in session storage
         sessionStorage.setItem('adminAuth', 'true');
         sessionStorage.setItem('adminUser', JSON.stringify({
-          id: 'admin',
-          username: 'admin',
-          email: 'farmconnect.helpdesk@gmail.com',
-          role: 'admin'
+          id: data.user.id,
+          username: data.user.username,
+          email: data.user.email,
+          role: data.user.role
         }));
+        localStorage.setItem('farmConnectToken', data.token);
 
         toast({
           title: 'Login successful',
@@ -66,10 +80,16 @@ const AdminLogin = () => {
         setTimeout(() => {
           navigate('/admin-dashboard');
         }, 500);
+      } else if (response.ok && data.success) {
+        toast({
+          title: 'Access Denied',
+          description: 'Only administrators can access this portal',
+          variant: 'destructive',
+        });
       } else {
         toast({
           title: 'Login failed',
-          description: 'Invalid username or password. Use admin/123456',
+          description: data.message || 'Invalid username or password',
           variant: 'destructive',
         });
       }
@@ -100,9 +120,9 @@ const AdminLogin = () => {
               <Label htmlFor="username">Username</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
+              <Input
                   id="username"
-                  placeholder="admin"
+                  placeholder="FC-admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"
@@ -138,17 +158,13 @@ const AdminLogin = () => {
           </form>
         </CardContent>
         <CardFooter className="border-t pt-4">
-          <div className="w-full space-y-2">
+          <div className="w-full">
             <p className="text-sm text-center text-gray-500">
-              This portal is for authorized administrators only
+              This portal is for authorized administrators only.
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <p className="text-xs text-blue-700 text-center">
-                <strong>Demo Credentials:</strong><br />
-                Username: admin<br />
-                Password: 123456
-              </p>
-            </div>
+            <p className="text-xs text-center text-gray-400 mt-2">
+              For access, contact: farmconnect.helpdesk@gmail.com
+            </p>
           </div>
         </CardFooter>
       </Card>

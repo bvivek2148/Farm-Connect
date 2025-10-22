@@ -25,8 +25,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<boolean>;
-  signupWithEmail: (userData: EmailSignupData) => Promise<{ success: boolean; needsVerification?: boolean; error?: string; message?: string }>;
-  signupWithPhone: (userData: PhoneSignupData) => Promise<{ success: boolean; needsVerification?: boolean; error?: string; message?: string }>;
+  signupWithEmail: (userData: EmailSignupData) => Promise<{ success: boolean; needsVerification?: boolean; error?: string; message?: string; field?: string }>;
+  signupWithPhone: (userData: PhoneSignupData) => Promise<{ success: boolean; needsVerification?: boolean; error?: string; message?: string; field?: string }>;
   verifyOTP: (token: string, type: 'email' | 'sms', email?: string, phone?: string) => Promise<boolean>;
   resendOTP: (email?: string, phone?: string, type?: 'email' | 'sms') => Promise<boolean>;
   logout: () => Promise<void>;
@@ -287,6 +287,24 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       setIsLoading(true);
       console.log('🚀 Starting hybrid signup process...');
+      
+      // First, validate username uniqueness by calling backend
+      console.log('🔍 Checking username uniqueness with backend...');
+      const validationResponse = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: userData.username })
+      });
+      
+      const validationData = await validationResponse.json();
+      if (!validationData.available) {
+        console.warn('❌ Username already taken:', userData.username);
+        return { 
+          success: false, 
+          error: 'This username is already taken. Please choose a different one.',
+          field: 'username'
+        };
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
@@ -352,6 +370,24 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const signupWithPhone = async (userData: PhoneSignupData) => {
     try {
       setIsLoading(true);
+      
+      // First, validate username uniqueness by calling backend
+      console.log('🔍 Checking username uniqueness with backend...');
+      const validationResponse = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: userData.username })
+      });
+      
+      const validationData = await validationResponse.json();
+      if (!validationData.available) {
+        console.warn('❌ Username already taken:', userData.username);
+        return { 
+          success: false, 
+          error: 'This username is already taken. Please choose a different one.',
+          field: 'username'
+        };
+      }
 
       const { data, error } = await supabase.auth.signUp({
         phone: userData.phone,

@@ -138,9 +138,26 @@ const SignUpPage = () => {
         });
         setShowSuccess(true);
       } else {
+        // Handle specific field errors from backend
+        const errorMessage = result.error || "Failed to create account. Please try again.";
+        const fieldError = result.field;
+        
+        // Set field-specific error if available
+        if (fieldError && fieldError === 'username') {
+          emailForm.setError('username', {
+            type: 'manual',
+            message: 'This username is already taken. Please choose a different one.'
+          });
+        } else if (fieldError && fieldError === 'email') {
+          emailForm.setError('email', {
+            type: 'manual',
+            message: 'This email is already in use. Please use a different email or sign in.'
+          });
+        }
+        
         toast({
           title: "Signup Failed",
-          description: result.error || "Failed to create account. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -171,9 +188,26 @@ const SignUpPage = () => {
         });
         setShowSuccess(true);
       } else {
+        // Handle specific field errors from backend
+        const errorMessage = result.error || "Failed to create account. Please try again.";
+        const fieldError = result.field;
+        
+        // Set field-specific error if available
+        if (fieldError && fieldError === 'username') {
+          phoneForm.setError('username', {
+            type: 'manual',
+            message: 'This username is already taken. Please choose a different one.'
+          });
+        } else if (fieldError && fieldError === 'email') {
+          phoneForm.setError('phone', {
+            type: 'manual',
+            message: 'This phone number is already in use. Please use a different number or sign in.'
+          });
+        }
+        
         toast({
           title: "Signup Failed",
-          description: result.error || "Failed to create account. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -246,18 +280,7 @@ const SignUpPage = () => {
     
     setIsVerifying(true);
     
-    // For demo purposes, accept 123456 as valid OTP
-    if (otpValue === '123456') {
-      setSuccessData({
-        title: "Verification Successful! 🎉",
-        description: "Demo verification completed successfully. Please login to continue and start exploring fresh, local products!"
-      });
-      setShowSuccess(true);
-      setIsVerifying(false);
-      return;
-    }
-    
-    // Try real OTP verification
+    // Verify OTP with Supabase
     const success = await verifyOTP(
       otpValue,
       signupType as 'email' | 'sms',
@@ -274,7 +297,7 @@ const SignUpPage = () => {
     } else {
       toast({
         title: "Verification Failed",
-        description: "Invalid verification code. For demo, try '123456'.",
+        description: "Invalid verification code. Please try again.",
         variant: "destructive",
       });
     }

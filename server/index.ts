@@ -93,13 +93,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize admin user if it doesn't exist
-  try {
-    await initializeAdmin();
-  } catch (error) {
+  // Initialize admin user if it doesn't exist (non-blocking)
+  initializeAdmin().catch(error => {
     console.error('⚠️  Admin initialization failed:', error);
-    // Don't exit - server can still run, admin just needs to be created manually
-  }
+    // Non-blocking - server continues to run
+  });
   
   // Database seeding removed - use npm run db:seed-all instead
   
@@ -107,7 +105,12 @@ app.use((req, res, next) => {
   setupSocketIO(io);
   
   // Register routes and pass io instance for real-time features
-  await registerRoutes(app, io);
+  try {
+    await registerRoutes(app, io);
+  } catch (error) {
+    console.error('⚠️ Route registration error:', error);
+    // Continue anyway - some routes may still work
+  }
 
   // Global error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
