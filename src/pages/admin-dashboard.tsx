@@ -472,15 +472,71 @@ const AdminDashboard = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Reload real users
-    loadRealUsers();
-    // Simulate data refresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setRefreshing(false);
-    toast({
-      title: 'Data refreshed',
-      description: 'Dashboard data has been updated',
-    });
+    
+    try {
+      // Reload users from API
+      await loadRealUsers();
+      
+      // Fetch products
+      const productsRes = await fetch('/api/products');
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        if (productsData.products) {
+          setProducts(productsData.products.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            farmer: p.farmer || 'Unknown',
+            price: p.price,
+            stock: p.stock || 0,
+            image: p.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(p.name)}`
+          })));
+        }
+      }
+      
+      // Fetch orders
+      const ordersRes = await fetch('/api/orders', { credentials: 'include' });
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        if (ordersData.orders) {
+          setOrders(ordersData.orders.map((o: any) => ({
+            id: o.id,
+            customer: o.customerName || 'Guest',
+            items: o.items?.length || 0,
+            total: `$${o.total || 0}`,
+            status: o.status || 'pending',
+            date: new Date(o.createdAt).toLocaleDateString()
+          })));
+        }
+      }
+      
+      // Recalculate statistics
+      const newStats = {
+        ...dynamicStatistics,
+        totalUsers: users.length,
+        totalFarms: users.filter(u => u.role === 'farmer').length,
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce((sum, order) => {
+          const amount = parseFloat(order.total.replace('$', ''));
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0),
+      };
+      setDynamicStatistics(newStats);
+      
+      toast({
+        title: '✅ Data refreshed',
+        description: 'Dashboard data has been updated successfully',
+      });
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: '❌ Refresh failed',
+        description: 'Could not refresh all data. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleNotificationCountChange = (count: number) => {
@@ -809,8 +865,11 @@ const AdminDashboard = () => {
               </Button>
 
               {/* Logout */}
-              <Button variant="outline" onClick={handleLogout} className="ml-2">
+              <Button variant="outline" onClick={handleLogout} className="ml-2 hidden sm:flex">
                 <LogOut className="h-4 w-4 mr-2" /> Logout
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleLogout} className="ml-2 sm:hidden">
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -821,24 +880,24 @@ const AdminDashboard = () => {
       
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/50 mb-6 overflow-hidden">
-            <TabsList className="grid grid-cols-6 w-full h-auto p-2 bg-gradient-to-r from-slate-50 to-slate-100">
-              <TabsTrigger value="overview" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
-                <BarChart className="h-4 w-4 mr-2" /> Overview
+            <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 w-full h-auto p-2 bg-gradient-to-r from-slate-50 to-slate-100">
+              <TabsTrigger value="overview" className="flex items-center justify-center py-3 px-2 sm:px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
+                <BarChart className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
-                <Activity className="h-4 w-4 mr-2" /> Analytics
+              <TabsTrigger value="analytics" className="flex items-center justify-center py-3 px-2 sm:px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
+                <Activity className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Analytics</span>
               </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
-                <Users className="h-4 w-4 mr-2" /> Users
+              <TabsTrigger value="users" className="flex items-center justify-center py-3 px-2 sm:px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
+                <Users className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Users</span>
               </TabsTrigger>
-              <TabsTrigger value="products" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
-                <Layers className="h-4 w-4 mr-2" /> Products
+              <TabsTrigger value="products" className="flex items-center justify-center py-3 px-2 sm:px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
+                <Layers className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Products</span>
               </TabsTrigger>
-              <TabsTrigger value="orders" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
-                <ShoppingBag className="h-4 w-4 mr-2" /> Orders
+              <TabsTrigger value="orders" className="flex items-center justify-center py-3 px-2 sm:px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
+                <ShoppingBag className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Orders</span>
               </TabsTrigger>
-              <TabsTrigger value="system" className="flex items-center justify-center py-3 px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
-                <Database className="h-4 w-4 mr-2" /> System
+              <TabsTrigger value="system" className="flex items-center justify-center py-3 px-2 sm:px-4 rounded-lg transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-slate-100">
+                <Database className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">System</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -2056,12 +2115,44 @@ const AdminDashboard = () => {
             <Button variant="outline" onClick={() => setShowSettingsModal(false)}>
               Cancel
             </Button>
-            <Button onClick={() => {
-              setShowSettingsModal(false);
-              toast({
-                title: 'Settings saved',
-                description: 'System settings have been updated successfully',
-              });
+            <Button onClick={async () => {
+              try {
+                const siteName = (document.getElementById('site-name') as HTMLInputElement)?.value;
+                const adminEmail = (document.getElementById('admin-email') as HTMLInputElement)?.value;
+                const sessionTimeout = (document.getElementById('session-timeout') as HTMLInputElement)?.value;
+                const maxLoginAttempts = (document.getElementById('max-login-attempts') as HTMLInputElement)?.value;
+                
+                const response = await fetch('/api/admin/settings', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    siteName,
+                    adminEmail,
+                    sessionTimeout: parseInt(sessionTimeout),
+                    maxLoginAttempts: parseInt(maxLoginAttempts),
+                    emailNotifications: true,
+                    smsNotifications: true
+                  })
+                });
+                
+                if (response.ok) {
+                  toast({
+                    title: '✅ Settings saved',
+                    description: 'System settings have been updated successfully',
+                  });
+                } else {
+                  throw new Error('Failed to save settings');
+                }
+              } catch (error) {
+                toast({
+                  title: '❌ Save failed',
+                  description: 'Could not save settings. Please try again.',
+                  variant: 'destructive',
+                });
+              } finally {
+                setShowSettingsModal(false);
+              }
             }}>
               Save Changes
             </Button>

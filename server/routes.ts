@@ -241,6 +241,58 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
     }
   });
 
+  // System settings routes
+  app.get("/api/admin/settings", authenticate, authorize(['admin']), async (req, res) => {
+    try {
+      // Return settings (in production, fetch from database)
+      const settings = {
+        siteName: process.env.SITE_NAME || 'Farm Connect',
+        adminEmail: process.env.ADMIN_EMAIL || 'admin@farmconnect.com',
+        supportEmail: process.env.SUPPORT_EMAIL || 'support@farmconnect.com',
+        emailNotifications: true,
+        smsNotifications: true,
+        sessionTimeout: 30, // minutes
+        maxLoginAttempts: 5,
+        maintenanceMode: false,
+        allowNewRegistrations: true,
+        requireEmailVerification: true,
+      };
+      
+      res.json({
+        success: true,
+        settings
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch settings'
+      });
+    }
+  });
+
+  app.put("/api/admin/settings", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
+    try {
+      const { siteName, adminEmail, supportEmail, emailNotifications, smsNotifications, sessionTimeout, maxLoginAttempts } = req.body;
+      
+      // In production, save to database
+      // For now, acknowledge the update
+      console.log('⚙️ Settings updated:', req.body);
+      
+      res.json({
+        success: true,
+        message: 'Settings updated successfully',
+        settings: req.body
+      });
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update settings'
+      });
+    }
+  });
+  
   // Create new admin user (super admin only - requires existing admin)
   app.post("/api/admin/users/create-admin", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
     try {
