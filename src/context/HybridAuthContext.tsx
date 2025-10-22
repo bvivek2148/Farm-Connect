@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import { neonDb, sql } from '@/lib/neon';
-import { users } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
 import type { User as AuthUser } from '@supabase/supabase-js';
+
+// Note: Database operations (neonDb, sql) are server-side only
+// Frontend uses Supabase for authentication
 
 // Define the user type - matches shared schema
 export type User = {
@@ -68,11 +68,12 @@ interface PhoneSignupData {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper function to sync user profile between Supabase Auth and Neon DB
+// Note: Frontend doesn't do direct database queries - this formats Supabase auth user
 async function syncUserWithNeon(authUser: AuthUser, additionalData?: Partial<User>) {
   try {
-    console.log('🔄 Syncing user with Neon database...');
+    console.log('🔄 Processing user profile from Supabase Auth...');
     
-    // Convert Supabase UUID to consistent numeric ID for Neon database
+    // Convert Supabase UUID to consistent numeric ID
     function hashUuidToInt(uuid: string): number {
       let hash = 0;
       for (let i = 0; i < uuid.length; i++) {
@@ -84,9 +85,9 @@ async function syncUserWithNeon(authUser: AuthUser, additionalData?: Partial<Use
     }
     
     const numericId = hashUuidToInt(authUser.id);
-    console.log('🔢 Generated numeric ID:', numericId, 'from Supabase UUID:', authUser.id);
+    console.log('🔢 Generated numeric ID:', numericId);
     
-    const userData = {
+    const userData: User = {
       id: numericId,
       email: authUser.email!,
       username: additionalData?.username || authUser.user_metadata?.username || authUser.email?.split('@')[0] || '',
@@ -94,47 +95,15 @@ async function syncUserWithNeon(authUser: AuthUser, additionalData?: Partial<Use
       lastName: additionalData?.lastName || authUser.user_metadata?.last_name || '',
       role: (additionalData?.role as 'customer' | 'farmer' | 'admin') || 'customer',
       isVerified: authUser.email_confirmed_at != null,
-      phone: authUser.phone || additionalData?.phone || null,
-      avatar: authUser.user_metadata?.avatar_url || additionalData?.avatar || null,
+      phone: authUser.phone || additionalData?.phone || undefined,
+      avatar: authUser.user_metadata?.avatar_url || additionalData?.avatar || undefined,
     };
     
-    console.log('📝 User data prepared:', userData);
+    console.log('📝 User profile prepared from Supabase:', userData.email, userData.role);
+    return userData;
     
-    // Check if user exists in Neon database
-    try {
-      const result = await sql`SELECT * FROM users WHERE id = ${numericId} LIMIT 1`;
-      
-      if (result.length > 0) {
-        console.log('✅ User exists in Neon database');
-        return formatUser(result[0] as any);
-      }
-    } catch (queryError) {
-      console.error('⚠️ Neon query error:', queryError);
-      // Fall back to Supabase user data
-      console.log('🔄 Falling back to Supabase user data');
-      return userData as User;
-    }
-
-    // Create user in Neon database
-    console.log('➕ Creating user in Neon database...');
-    try {
-      // Use a placeholder password since Supabase handles actual authentication
-      const result = await sql`
-        INSERT INTO users (id, email, username, first_name, last_name, role, is_verified, password) 
-        VALUES (${userData.id}, ${userData.email}, ${userData.username}, ${userData.firstName || null}, ${userData.lastName || null}, ${userData.role}, ${userData.isVerified}, 'supabase_managed')
-        RETURNING *
-      `;
-      
-      console.log('✅ User created in Neon database');
-      return formatUser(result[0] as any);
-    } catch (insertError) {
-      console.error('⚠️ Neon insert error:', insertError);
-      // Fall back to Supabase user data
-      console.log('🔄 Falling back to Supabase user data after insert failure');
-      return userData as User;
-    }
   } catch (error) {
-    console.error('❌ Error creating user profile:', error);
+    console.error('❌ Error processing user profile:', error);
     // Return minimal fallback user data
     function hashUuidToInt(uuid: string): number {
       let hash = 0;
@@ -155,8 +124,8 @@ async function syncUserWithNeon(authUser: AuthUser, additionalData?: Partial<Use
       lastName: '',
       role: 'customer' as const,
       isVerified: authUser.email_confirmed_at != null,
-      phone: null,
-      avatar: null,
+      phone: undefined,
+      avatar: undefined,
     };
   }
 }
