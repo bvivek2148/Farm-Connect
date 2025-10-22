@@ -85,6 +85,93 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   app.post("/api/auth/logout", logoutHandler);
   app.post("/api/auth/forgot-password", validateInput, forgotPasswordHandler);
   app.get("/api/auth/user", authenticate, currentUserHandler);
+  
+  // OAuth user sync endpoint - creates/updates user from OAuth provider
+  app.post("/api/auth/sync-oauth-user", validateInput, async (req, res) => {
+    try {
+      const { email, username, firstName, lastName, avatar, provider } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+      
+      // Check if user already exists
+      let user = await storage.getUserByEmail(email);
+      
+      if (user) {
+        // Update existing user with OAuth data
+        user = await storage.updateUser(user.id, {
+          avatar: avatar || user.avatar,
+          isVerified: true // OAuth users are pre-verified
+        });
+        
+        console.log(`✅ OAuth user synced (existing): ${email}`);
+        return res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            avatar: user.avatar,
+            isVerified: user.isVerified
+          },
+          message: 'User synced successfully'
+        });
+      }
+      
+      // Create new user from OAuth data
+      const newUser = await storage.createUser({
+        email,
+        username: username || email.split('@')[0],
+        password: '', // OAuth users don't have passwords
+        firstName: firstName || '',
+        lastName: lastName || '',
+        role: 'customer',
+        isVerified: true,
+        avatar: avatar || undefined
+      });
+      
+      console.log(`✅ New OAuth user created: ${email} (${provider})`);
+      
+      // Emit real-time notification to admins
+      if (io) {
+        io.emit('admin:new-user', {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
+          provider,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      res.status(201).json({
+        success: true,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          role: newUser.role,
+          avatar: newUser.avatar,
+          isVerified: newUser.isVerified
+        },
+        message: 'User created successfully'
+      });
+    } catch (error: any) {
+      console.error('Error syncing OAuth user:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to sync user'
+      });
+    }
+  });
 
   // Admin routes with enhanced security
   app.get("/api/admin/users", authenticate, authorize(['admin']), adminRateLimit, async (req, res) => {

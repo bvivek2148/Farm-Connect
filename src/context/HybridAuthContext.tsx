@@ -161,17 +161,42 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         
         if (session?.user) {
           console.log('User signed in, syncing with Neon database...');
-          // User is signed in - sync with Neon database
+          // User is signed in - sync with Neon database via API
           try {
-            const neonUser = await syncUserWithNeon(session.user);
-            if (neonUser) {
-              console.log('✅ User synced with Neon:', neonUser.email, neonUser.role);
-              setUser(neonUser as User);
+            // Call backend API to persist OAuth user
+            const response = await fetch('/api/auth/sync-oauth-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: session.user.email,
+                username: session.user.user_metadata?.username || session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                firstName: session.user.user_metadata?.first_name || session.user.user_metadata?.given_name || '',
+                lastName: session.user.user_metadata?.last_name || session.user.user_metadata?.family_name || '',
+                avatar: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
+                provider: session.user.app_metadata?.provider || 'email'
+              })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.user) {
+              console.log('✅ OAuth user synced to database:', data.user.email);
+              setUser(data.user as User);
             } else {
-              console.error('Failed to sync user with Neon');
+              // Fallback to local sync if API fails
+              console.warn('⚠️ API sync failed, using local user data');
+              const neonUser = await syncUserWithNeon(session.user);
+              if (neonUser) {
+                setUser(neonUser as User);
+              }
             }
           } catch (error) {
-            console.error('Error during user sync:', error);
+            console.error('Error during OAuth user sync:', error);
+            // Fallback to local sync
+            const neonUser = await syncUserWithNeon(session.user);
+            if (neonUser) {
+              setUser(neonUser as User);
+            }
           }
         } else {
           console.log('User signed out');
