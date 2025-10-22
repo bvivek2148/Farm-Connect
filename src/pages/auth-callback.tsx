@@ -11,37 +11,45 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        console.log('🔐 Processing auth callback...');
+        console.log('Current URL:', window.location.href);
+        console.log('Hash params:', window.location.hash);
+        
+        // Exchange the code/token from URL for a session
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Auth callback error:', error);
+          console.error('❌ Auth callback error:', error);
           toast({
             title: "Authentication Failed",
-            description: error.message,
+            description: error.message || "Failed to complete authentication",
             variant: "destructive",
           });
-          setLocation('/login');
+          setTimeout(() => setLocation('/login'), 2000);
           return;
         }
 
-        if (data.session) {
+        if (session) {
+          console.log('✅ Session established:', session.user.email);
           toast({
             title: "Welcome! 🎉",
-            description: "Successfully signed in with Google!",
+            description: `Successfully signed in as ${session.user.email}`,
           });
-          setLocation('/');
+          
+          // Small delay to ensure state updates
+          setTimeout(() => setLocation('/'), 500);
         } else {
-          // No session, redirect to sign in
-          setLocation('/login');
+          console.log('⚠️ No session found, redirecting to login');
+          setTimeout(() => setLocation('/login'), 1000);
         }
-      } catch (error) {
-        console.error('Auth callback error:', error);
+      } catch (error: any) {
+        console.error('❌ Auth callback exception:', error);
         toast({
           title: "Authentication Error",
-          description: "An error occurred during authentication.",
+          description: error.message || "An error occurred during authentication.",
           variant: "destructive",
         });
-        setLocation('/login');
+        setTimeout(() => setLocation('/login'), 2000);
       }
     };
 
