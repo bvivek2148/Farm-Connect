@@ -20,7 +20,7 @@ const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? process.env.CLIENT_URL || 'https://farm-connect-vivek-bukkas-projects.vercel.app'
+      ? process.env.CLIENT_URL || 'https://farm-connect-nh7n.onrender.com'
       : ['http://localhost:3000', 'http://localhost:5173'],
     methods: ['GET', 'POST'],
     credentials: true,
@@ -47,7 +47,7 @@ app.use(helmet({
 // CORS middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? process.env.CLIENT_URL || 'https://farm-connect-vivek-bukkas-projects.vercel.app'
+    ? process.env.CLIENT_URL || 'https://farm-connect-nh7n.onrender.com'
     : ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true,
 }));
