@@ -19,6 +19,9 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
   const [location, navigate] = useLocation();
   const { toast } = useToast();
 
@@ -29,6 +32,58 @@ const AdminLogin = () => {
       navigate('/admin-dashboard');
     }
   }, [navigate]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+
+    try {
+      if (!forgotEmail.trim()) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please enter your email address',
+          variant: 'destructive',
+        });
+        setForgotLoading(false);
+        return;
+      }
+
+      // Call forgot password API
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: 'Password reset sent',
+          description: 'If an account exists with this email, password reset instructions have been sent',
+        });
+        setForgotEmail('');
+        setShowForgotPassword(false);
+      } else {
+        toast({
+          title: 'Error',
+          description: data.message || 'Failed to process password reset',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast({
+        title: 'Error',
+        description: 'There was a problem processing your request',
+        variant: 'destructive',
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,6 +212,15 @@ const AdminLogin = () => {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
+            <div className="text-right mt-2">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                Forgot password?
+              </button>
+            </div>
           </form>
         </CardContent>
         <CardFooter className="border-t pt-4">
@@ -170,6 +234,60 @@ const AdminLogin = () => {
           </div>
         </CardFooter>
       </Card>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
+              <CardDescription className="text-center">
+                Enter your email address and we'll send you instructions to reset your password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email Address</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setForgotEmail('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-green-500 to-blue-500"
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

@@ -259,31 +259,53 @@ const AdminDashboard = () => {
         'Content-Type': 'application/json',
       };
 
+      let realUsers = [];
+      let realProducts = [];
+      let realOrders = [];
+
       // Fetch users
-      const usersResponse = await fetch('/api/admin/users', { headers });
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        setUsers(usersData.users || []);
+      try {
+        const usersResponse = await fetch('/api/admin/users', { headers });
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          realUsers = usersData.users || [];
+          setUsers(realUsers);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
       }
 
       // Fetch products
-      const productsResponse = await fetch('/api/products');
-      if (productsResponse.ok) {
-        const productsData = await productsResponse.json();
-        setProducts(productsData.products || []);
+      try {
+        const productsResponse = await fetch('/api/products');
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          realProducts = productsData.products || [];
+          setProducts(realProducts);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
       }
 
-      // Fetch orders (if endpoint exists)
-      const ordersResponse = await fetch('/api/admin/orders', { headers });
-      if (ordersResponse.ok) {
-        const ordersData = await ordersResponse.json();
-        setOrders(ordersData.orders || []);
+      // Fetch orders - gracefully handle missing endpoint
+      try {
+        const ordersResponse = await fetch('/api/admin/orders', { headers });
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          realOrders = ordersData.orders || [];
+          setOrders(realOrders);
+        } else {
+          // Orders endpoint doesn't exist or returned error - use empty array
+          realOrders = [];
+          setOrders([]);
+        }
+      } catch (error) {
+        console.error('Orders endpoint not available, using empty array:', error);
+        realOrders = [];
+        setOrders([]);
       }
 
-      // Calculate statistics from real data
-      const realUsers = usersResponse.ok ? (await usersResponse.json()).users || [] : [];
-      const realProducts = productsResponse.ok ? (await productsResponse.json()).products || [] : [];
-      const realOrders = ordersResponse.ok ? (await ordersResponse.json()).orders || [] : [];
+      // Calculate statistics from real data (no second reads needed)
       
       const calculatedStats = {
         totalUsers: realUsers.length,
