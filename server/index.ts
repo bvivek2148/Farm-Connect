@@ -35,11 +35,19 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "ws:", "wss:", "https://api.openrouter.ai"],
+      connectSrc: [
+        "'self'", 
+        "ws:", 
+        "wss:", 
+        "https://api.openrouter.ai",
+        "https://*.supabase.co",
+        "https://accounts.google.com",
+        "https://oauth2.googleapis.com"
+      ],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "https://lh3.googleusercontent.com"],
     },
   },
 }));
