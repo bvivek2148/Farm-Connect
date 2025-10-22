@@ -894,10 +894,6 @@ const AdminDashboard = () => {
                     </div>
                     <span className="text-sm text-green-600 ml-2">vs last month</span>
                   </div>
-                  <div className="mt-3 flex items-center">
-                    <Zap className="h-4 w-4 text-green-600 mr-1" />
-                    <span className="text-sm text-green-600">12 new this month</span>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -958,48 +954,6 @@ const AdminDashboard = () => {
               </Card>
             </div>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest system events and activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Users className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">New user registered</p>
-                    <p className="text-sm text-gray-500">Jennifer Lee (jennifer@example.com) joined as a farmer</p>
-                    <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="bg-green-100 p-2 rounded-full mr-3">
-                    <ShoppingBag className="h-4 w-4 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">New order placed</p>
-                    <p className="text-sm text-gray-500">Order #12458 was placed by Lisa Wong ($53.96)</p>
-                    <p className="text-xs text-gray-400 mt-1">4 hours ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="bg-amber-100 p-2 rounded-full mr-3">
-                    <Layers className="h-4 w-4 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">New product added</p>
-                    <p className="text-sm text-gray-500">Organic Carrots was added by Green Leaf Gardens</p>
-                    <p className="text-xs text-gray-400 mt-1">6 hours ago</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* New Analytics Tab */}
@@ -1060,29 +1014,6 @@ const AdminDashboard = () => {
                     <span className="font-semibold text-blue-600">{dynamicStatistics.activeConnections}</span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-3"></div>
-                      <span className="text-sm">Orders Today</span>
-                    </div>
-                    <span className="font-semibold text-green-600">47</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse mr-3"></div>
-                      <span className="text-sm">Revenue Today</span>
-                    </div>
-                    <span className="font-semibold text-purple-600">$1,247</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse mr-3"></div>
-                      <span className="text-sm">New Signups</span>
-                    </div>
-                    <span className="font-semibold text-orange-600">12</span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1098,31 +1029,7 @@ const AdminDashboard = () => {
               <CardDescription>User device breakdown</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Monitor className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <div className="text-2xl font-bold">62%</div>
-                  <div className="text-sm text-gray-600">Desktop</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Smartphone className="h-8 w-8 text-green-600" />
-                  </div>
-                  <div className="text-2xl font-bold">34%</div>
-                  <div className="text-sm text-gray-600">Mobile</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Package className="h-8 w-8 text-purple-600" />
-                  </div>
-                  <div className="text-2xl font-bold">4%</div>
-                  <div className="text-sm text-gray-600">Tablet</div>
-                </div>
-              </div>
+              <p className="text-center text-gray-500">Device analytics data will appear here</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1498,7 +1405,14 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.map((product) => (
+                    {products.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          No products found. Products will appear here when farmers list items.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      products.map((product) => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{product.category}</TableCell>
@@ -1552,7 +1466,8 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -1996,37 +1911,7 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div className="flex items-center">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
-                      <span className="text-sm">Failed login attempts</span>
-                    </div>
-                    <span className="font-semibold text-yellow-600">3</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                      <span className="text-sm">Successful logins</span>
-                    </div>
-                    <span className="font-semibold text-green-600">247</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center">
-                      <Database className="h-4 w-4 text-blue-600 mr-2" />
-                      <span className="text-sm">Database queries</span>
-                    </div>
-                    <span className="font-semibold text-blue-600">1,247</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="flex items-center">
-                      <Globe className="h-4 w-4 text-purple-600 mr-2" />
-                      <span className="text-sm">API requests</span>
-                    </div>
-                    <span className="font-semibold text-purple-600">5,432</span>
-                  </div>
+                  <p className="text-center text-gray-500 py-4">Security events will appear here</p>
                 </div>
               </CardContent>
             </Card>
