@@ -138,7 +138,7 @@ const ConnectingSection = () => {
               </motion.div>
             </motion.div>
 
-            <Link href="/signup">
+            <Link href="/community">
               <motion.span
                 className="inline-flex items-center text-primary hover:underline font-medium group cursor-pointer"
                 initial={{ opacity: 0, y: 20 }}

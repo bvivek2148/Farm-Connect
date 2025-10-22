@@ -31,6 +31,7 @@ const FarmerDashboard = lazy(() => import("@/pages/farmer-dashboard"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Orders = lazy(() => import("@/pages/orders"));
 const AuthCallback = lazy(() => import("@/pages/auth-callback"));
+const Community = lazy(() => import("@/pages/community"));
 
 function Router() {
   return (
@@ -56,6 +57,7 @@ function Router() {
             <Route path="/admin-dashboard" component={AdminDashboard} />
             <Route path="/farmer-dashboard" component={FarmerDashboard} />
             <Route path="/auth/callback" component={AuthCallback} />
+            <Route path="/community" component={Community} />
             {/* Fallback to 404 */}
             <Route component={NotFound} />
           </Switch>
