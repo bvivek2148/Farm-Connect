@@ -145,8 +145,9 @@ app.use((req, res, next) => {
 
   // Start server
   const port = process.env.PORT || 5000;
-  server.listen(port, () => {
-    log(`🚀 Server running on port ${port}`);
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  server.listen(port, host, () => {
+    log(`🚀 Server running on ${host}:${port}`);
     log(`📡 Socket.IO enabled for real-time features`);
     log(`🔒 Security middleware active`);
     log(`⚡ Environment: ${process.env.NODE_ENV || 'development'}`);
