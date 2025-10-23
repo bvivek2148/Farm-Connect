@@ -20,6 +20,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.phone, phone));
+    return user || undefined;
+  }
+
   async getAllUsers(): Promise<User[]> {
     const allUsers = await db.select().from(users);
     return allUsers;
@@ -32,6 +37,7 @@ export class DatabaseStorage implements IStorage {
       password: insertUser.password,
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
+      phone: insertUser.phone || null,
       role: insertUser.role || 'customer'
     };
     

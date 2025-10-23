@@ -25,6 +25,7 @@ import {
 import { registerChatRoutes } from "./chat-routes";
 import { createAdminUser } from "./admin-init";
 import { validateInput, loginRateLimit, adminRateLimit } from "./security";
+import { createOTP, verifyOTP, sendOTP } from "./otp-service";
 
 export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   // Add middleware
@@ -169,6 +170,137 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
       res.status(500).json({
         success: false,
         message: error.message || 'Failed to sync user'
+      });
+    }
+  });
+
+  // OTP-based phone signup endpoints
+  app.post("/api/auth/phone/send-otp", validateInput, loginRateLimit, async (req, res) => {
+    try {
+      const { phone } = req.body;
+
+      if (!phone || typeof phone !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Phone number is required'
+        });
+      }
+
+      // Check if phone is already registered
+      const existingUser = await storage.getUserByPhone(phone);
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'This phone number is already registered'
+        });
+      }
+
+      // Generate and store OTP
+      const otp = await createOTP(phone);
+
+      // Send OTP via SMS
+      const sent = await sendOTP(phone, otp);
+
+      if (!sent) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send OTP. Please try again.'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'OTP sent successfully to your phone',
+        // For development, include OTP in response (remove in production)
+        ...(process.env.NODE_ENV === 'development' && { otp })
+      });
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP. Please try again.'
+      });
+    }
+  });
+
+  app.post("/api/auth/phone/verify-otp", validateInput, loginRateLimit, async (req, res) => {
+    try {
+      const { phone, otp, username, password } = req.body;
+
+      if (!phone || !otp) {
+        return res.status(400).json({
+          success: false,
+          message: 'Phone number and OTP are required'
+        });
+      }
+
+      // Verify OTP
+      const isValid = await verifyOTP(phone, otp);
+
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired OTP'
+        });
+      }
+
+      // Check if username is provided for new user creation
+      if (!username || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username and password are required'
+        });
+      }
+
+      // Create user with verified phone
+      const hashedPassword = await hashPassword(password);
+      const newUser = await storage.createUser({
+        username,
+        email: `phone_${phone}@farmconnect.local`, // Temporary email for phone-only users
+        password: hashedPassword,
+        phone,
+        role: 'customer',
+        isVerified: true // Phone is verified via OTP
+      });
+
+      // Emit real-time notification to admins
+      if (io) {
+        io.emit('admin:new-user', {
+          id: newUser.id,
+          username: newUser.username,
+          phone: newUser.phone,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Generate token for auto-login
+      const token = generateToken({
+        id: newUser.id,
+        username: newUser.username,
+        role: newUser.role,
+        email: newUser.email,
+        firstName: newUser.firstName || '',
+        lastName: newUser.lastName || '',
+        isVerified: newUser.isVerified
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Phone verified and account created successfully',
+        token,
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          phone: newUser.phone,
+          role: newUser.role,
+          isVerified: newUser.isVerified
+        }
+      });
+    } catch (error: any) {
+      console.error('Error verifying OTP:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to verify OTP'
       });
     }
   });

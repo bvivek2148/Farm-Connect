@@ -302,8 +302,7 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
     
     // If still not found and input looks like a phone number, try phone lookup
     if (!user && input.match(/^\+?[1-9]\d{1,14}$/)) {
-      // Phone number pattern - try to find user with phone-based email
-      user = await storage.getUserByEmail(`phone_${input}@farmconnect.local`);
+      user = await storage.getUserByPhone(input);
     }
 
     if (!user) {

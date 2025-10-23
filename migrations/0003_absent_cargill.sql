@@ -1,0 +1,1 @@
+ALTER TABLE "otp_verifications" ALTER COLUMN "attempts" SET DATA TYPE integer;

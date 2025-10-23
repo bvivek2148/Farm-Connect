@@ -15,6 +15,20 @@
       "when": 1761227342515,
       "tag": "0001_new_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761228051894,
+      "tag": "0002_fine_may_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761228266649,
+      "tag": "0003_absent_cargill",
+      "breakpoints": true
     }
   ]
 }

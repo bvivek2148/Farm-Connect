@@ -1,4 +1,4 @@
-import { pgTable, text, serial, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 // Enhanced User schema with more fields
@@ -145,3 +145,22 @@ export const createMessageSchema = z.object({
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertMessage = z.infer<typeof createMessageSchema>;
+
+// OTP verification schema
+export const otpVerifications = pgTable("otp_verifications", {
+  id: serial("id").primaryKey(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  otp: varchar("otp", { length: 6 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  verified: boolean("verified").default(false).notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const createOtpSchema = z.object({
+  phone: z.string(),
+  otp: z.string(),
+});
+
+export type OtpVerification = typeof otpVerifications.$inferSelect;
+export type InsertOtp = z.infer<typeof createOtpSchema>;
