@@ -10,6 +10,21 @@ const getAuthHeaders = () => {
 };
 
 // User Management APIs
+export const createUser = async (userData: any) => {
+  const response = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(userData),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to create user');
+  }
+  
+  return response.json();
+};
+
 export const updateUser = async (userId: number, userData: any) => {
   const response = await fetch(`/api/admin/users/${userId}`, {
     method: 'PUT',
@@ -34,6 +49,21 @@ export const deleteUser = async (userId: number) => {
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to delete user');
+  }
+  
+  return response.json();
+};
+
+export const toggleUserStatus = async (userId: number, status: string) => {
+  const response = await fetch(`/api/admin/users/${userId}/status`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to toggle user status');
   }
   
   return response.json();

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { io, Socket } from 'socket.io-client';
 import {
   Card,
   CardContent,
@@ -125,6 +126,9 @@ interface User {
   id: number;
   username: string;
   email: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
   role: string;
   status: string;
   joinDate: string;
@@ -179,10 +183,13 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRole, setFilterRole] = useState<string>('all');
+  const [orderSearchTerm, setOrderSearchTerm] = useState<string>('');
+  const [orderFilterStatus, setOrderFilterStatus] = useState<string>('all');
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [notificationCount, setNotificationCount] = useState<number>(3);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   // Modal states
   const [showAddUserModal, setShowAddUserModal] = useState<boolean>(false);
@@ -454,6 +461,69 @@ const AdminDashboard = () => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Socket.io real-time notifications
+  useEffect(() => {
+    // Initialize socket connection
+    const newSocket = io(window.location.origin, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Socket.io connected');
+    });
+
+    // Listen for new user events
+    newSocket.on('admin:new-user', (data: any) => {
+      console.log('New user notification:', data);
+      toast({
+        title: '🆕 New User Registered',
+        description: `${data.username || data.email} has joined the platform`,
+      });
+      // Refresh users list
+      fetchData();
+    });
+
+    // Listen for new product events
+    newSocket.on('admin:new-product', (data: any) => {
+      console.log('New product notification:', data);
+      toast({
+        title: '🌱 New Product Listed',
+        description: `${data.name} has been added by ${data.farmer}`,
+      });
+      // Refresh products list
+      fetchData();
+    });
+
+    // Listen for new order events
+    newSocket.on('admin:new-order', (data: any) => {
+      console.log('New order notification:', data);
+      toast({
+        title: '🛍️ New Order Received',
+        description: `Order #${data.id} from ${data.customer || 'Guest'}`,
+      });
+      // Refresh orders list
+      fetchData();
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Socket.io disconnected');
+    });
+
+    newSocket.on('error', (error: any) => {
+      console.error('Socket.io error:', error);
+    });
+
+    setSocket(newSocket);
+
+    // Cleanup on unmount
+    return () => {
+      newSocket.close();
+    };
+  }, [toast]);
   
   const handleLogout = () => {
     // Clear all admin-related session data
@@ -475,54 +545,7 @@ const AdminDashboard = () => {
     setRefreshing(true);
     
     try {
-      // Reload users from API
-      await loadRealUsers();
-      
-      // Fetch products
-      const productsRes = await fetch('/api/products');
-      if (productsRes.ok) {
-        const productsData = await productsRes.json();
-        if (productsData.products) {
-          setProducts(productsData.products.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            category: p.category,
-            farmer: p.farmer || 'Unknown',
-            price: p.price,
-            stock: p.stock || 0,
-            image: p.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(p.name)}`
-          })));
-        }
-      }
-      
-      // Fetch orders
-      const ordersRes = await fetch('/api/orders', { credentials: 'include' });
-      if (ordersRes.ok) {
-        const ordersData = await ordersRes.json();
-        if (ordersData.orders) {
-          setOrders(ordersData.orders.map((o: any) => ({
-            id: o.id,
-            customer: o.customerName || 'Guest',
-            items: o.items?.length || 0,
-            total: `$${o.total || 0}`,
-            status: o.status || 'pending',
-            date: new Date(o.createdAt).toLocaleDateString()
-          })));
-        }
-      }
-      
-      // Recalculate statistics
-      const newStats = {
-        ...statistics,
-        totalUsers: users.length,
-        totalFarms: users.filter(u => u.role === 'farmer').length,
-        totalOrders: orders.length,
-        totalRevenue: orders.reduce((sum, order) => {
-          const amount = parseFloat(order.total.replace('$', ''));
-          return sum + (isNaN(amount) ? 0 : amount);
-        }, 0),
-      };
-      setStatistics(newStats);
+      await fetchData();
       
       toast({
         title: '✅ Data refreshed',
@@ -545,7 +568,7 @@ const AdminDashboard = () => {
   };
 
   // Enhanced User Management Functions
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newUser.username || !newUser.email) {
       toast({
         title: 'Error',
@@ -555,20 +578,41 @@ const AdminDashboard = () => {
       return;
     }
 
-    const user = {
-      id: users.length + 1,
-      ...newUser,
-      joinDate: new Date().toISOString().split('T')[0]
-    };
-
-    setUsers([...users, user]);
-    setNewUser({ username: '', email: '', role: 'customer', status: 'active' });
-    setShowAddUserModal(false);
-
-    toast({
-      title: 'User added successfully',
-      description: `${user.username} has been added to the system`,
-    });
+    try {
+      const result = await adminApi.createUser({
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        password: Math.random().toString(36).slice(-8) // Generate random password
+      });
+      
+      if (result.success && result.user) {
+        // Add to local state
+        const user = {
+          id: result.user.id,
+          username: result.user.username,
+          email: result.user.email,
+          role: result.user.role,
+          status: 'active',
+          joinDate: new Date(result.user.createdAt).toISOString().split('T')[0]
+        };
+        setUsers([...users, user]);
+        setNewUser({ username: '', email: '', role: 'customer', status: 'active' });
+        setShowAddUserModal(false);
+        
+        toast({
+          title: '✅ User added',
+          description: `${user.username} has been added to the system`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding user:', error);
+      toast({
+        title: '❌ Add failed',
+        description: error.message || 'Failed to add user',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleEditUser = (user: User) => {
@@ -636,45 +680,35 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleToggleUserStatus = (userId: number) => {
+  const handleToggleUserStatus = async (userId: number) => {
     const userToUpdate = users.find(user => user.id === userId);
     if (!userToUpdate) return;
 
     const newStatus = userToUpdate.status === 'active' ? 'inactive' : 'active';
 
-    // Update users state
-    const updatedUsers = users.map(user =>
-      user.id === userId ? { ...user, status: newStatus } : user
-    );
-    setUsers(updatedUsers);
-
-    // Update localStorage
     try {
-      const userKey = `farmConnectUser_${userToUpdate.username}`;
-      const storedData = localStorage.getItem(userKey);
-      if (storedData) {
-        const userData = JSON.parse(storedData);
-        const updatedUserData = { ...userData, status: newStatus };
-        localStorage.setItem(userKey, JSON.stringify(updatedUserData));
+      const result = await adminApi.toggleUserStatus(userId, newStatus);
+      
+      if (result.success) {
+        // Update local state
+        const updatedUsers = users.map(user =>
+          user.id === userId ? { ...user, status: newStatus } : user
+        );
+        setUsers(updatedUsers);
+        
+        toast({
+          title: '✅ Status updated',
+          description: `User status changed to ${newStatus}`,
+        });
       }
-
-      // Also update current user if it's the same user
-      const currentUser = localStorage.getItem('farmConnectUser');
-      if (currentUser) {
-        const userData = JSON.parse(currentUser);
-        if (userData.username === userToUpdate.username) {
-          const updatedUserData = { ...userData, status: newStatus };
-          localStorage.setItem('farmConnectUser', JSON.stringify(updatedUserData));
-        }
-      }
-    } catch (error) {
-      console.error('Error updating user status in localStorage:', error);
+    } catch (error: any) {
+      console.error('Error toggling user status:', error);
+      toast({
+        title: '❌ Status update failed',
+        description: error.message || 'Failed to update user status',
+        variant: 'destructive',
+      });
     }
-
-    toast({
-      title: 'User status updated',
-      description: `User status changed to ${newStatus}`,
-    });
   };
 
   // Product Image Upload Handler
@@ -1211,6 +1245,7 @@ const AdminDashboard = () => {
                     <TableRow>
                       <TableHead>Username</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Join Date</TableHead>
@@ -1218,17 +1253,41 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                          No users found. Users will appear here when they sign up.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      users.map((user) => (
+                    {(() => {
+                      // Apply filters
+                      const filteredUsers = users.filter(user => {
+                        const matchesSearch = searchTerm === '' || 
+                          user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesRole = filterRole === 'all' || user.role === filterRole;
+                        const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+                        return matchesSearch && matchesRole && matchesStatus;
+                      });
+                      
+                      if (filteredUsers.length === 0) {
+                        return (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                              {users.length === 0 ? 'No users found. Users will appear here when they sign up.' : 'No users match the current filters.'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                      
+                      return filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.username}</TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          {user.phone ? (
+                            <div className="flex items-center">
+                              <Phone className="h-3 w-3 mr-1 text-gray-400" />
+                              {user.phone}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge 
                             variant={user.role === 'farmer' ? 'outline' : 'secondary'}
@@ -1297,8 +1356,8 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </TableBody>
                 </Table>
               </div>
@@ -1858,6 +1917,32 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Order Search and Filter Controls */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search orders by customer or order ID..."
+                      value={orderSearchTerm}
+                      onChange={(e) => setOrderSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={orderFilterStatus} onValueChange={setOrderFilterStatus}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Shipped">Shipped</SelectItem>
+                    <SelectItem value="Delivered">Delivered</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -1872,14 +1957,27 @@ const AdminDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                          No orders found. Orders will appear here when customers make purchases.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      orders.map((order) => (
+                    {(() => {
+                      // Apply filters to orders
+                      const filteredOrders = orders.filter(order => {
+                        const matchesSearch = orderSearchTerm === '' || 
+                          order.customer.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+                          order.id.toString().includes(orderSearchTerm);
+                        const matchesStatus = orderFilterStatus === 'all' || order.status === orderFilterStatus;
+                        return matchesSearch && matchesStatus;
+                      });
+                      
+                      if (filteredOrders.length === 0) {
+                        return (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                              {orders.length === 0 ? 'No orders found. Orders will appear here when customers make purchases.' : 'No orders match the current filters.'}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                      
+                      return filteredOrders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id}</TableCell>
                         <TableCell>{order.customer}</TableCell>
@@ -1941,8 +2039,8 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </TableBody>
                 </Table>
               </div>
