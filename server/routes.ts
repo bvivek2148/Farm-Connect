@@ -1339,6 +1339,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
         data: {
           id: savedOrder.id.toString(),
           status: savedOrder.status,
+          paymentMethod: orderData.paymentMethod,
           total,
           subtotal,
           tax,

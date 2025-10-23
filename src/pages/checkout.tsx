@@ -217,7 +217,9 @@ export default function Checkout() {
                 <div className="text-sm text-green-700 space-y-1">
                   <p><strong>Order ID:</strong> #{orderDetails.id}</p>
                   <p><strong>Total:</strong> {formatPrice(orderDetails.total)}</p>
-                  <p><strong>Payment Method:</strong> {orderDetails.paymentMethod.toUpperCase()}</p>
+                  {orderDetails.paymentMethod && (
+                    <p><strong>Payment Method:</strong> {orderDetails.paymentMethod.toUpperCase()}</p>
+                  )}
                   <p><strong>Status:</strong> {orderDetails.status}</p>
                 </div>
               </div>
