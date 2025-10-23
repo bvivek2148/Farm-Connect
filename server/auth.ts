@@ -290,21 +290,27 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
   try {
     // Validate request body
     const validatedData = loginUserSchema.parse(req.body);
-    const input = validatedData.username.trim();
+    const input = validatedData.username?.trim() || '';
 
-    // Find user by username or email
+    // Find user by username, email, or phone number
     let user = await storage.getUserByUsername(input);
 
     // If not found by username, try email
     if (!user) {
       user = await storage.getUserByEmail(input);
     }
+    
+    // If still not found and input looks like a phone number, try phone lookup
+    if (!user && input.match(/^\+?[1-9]\d{1,14}$/)) {
+      // Phone number pattern - try to find user with phone-based email
+      user = await storage.getUserByEmail(`phone_${input}@farmconnect.local`);
+    }
 
     if (!user) {
-      console.log(`Login attempt failed: User not found with username/email '${input}'`);
+      console.log(`Login attempt failed: User not found with username/email/phone '${input}'`);
       res.status(401).json({
         success: false,
-        message: 'Invalid username/email or password'
+        message: 'Invalid username/email/phone or password'
       });
       return;
     }

@@ -330,51 +330,11 @@ export function registerOAuthRoutes(app: Express) {
     }
   });
 
-  // Twilio Phone OTP routes
-  app.post('/api/auth/phone/send-otp', async (req, res) => {
-    try {
-      const { phoneNumber } = req.body;
-      if (!phoneNumber) {
-        return res.status(400).json({
-          success: false,
-          message: 'Phone number is required'
-        });
-      }
-      res.status(200).json({
-        success: true,
-        message: 'OTP sent successfully (Twilio configured)',
-        phoneNumber: phoneNumber.replace(/(.{2})(.*)(.{2})/, '$1****$3')
-      });
-    } catch (error) {
-      console.error('Phone OTP error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send OTP'
-      });
-    }
-  });
-
-  app.post('/api/auth/phone/verify-otp', async (req, res) => {
-    try {
-      const { phoneNumber, otp } = req.body;
-      if (!phoneNumber || !otp) {
-        return res.status(400).json({
-          success: false,
-          message: 'Phone number and OTP are required'
-        });
-      }
-      res.status(200).json({
-        success: true,
-        message: 'OTP verified (Twilio configured)'
-      });
-    } catch (error) {
-      console.error('OTP verify error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to verify OTP'
-      });
-    }
-  });
+  // Twilio Phone OTP routes - Import handlers
+  const { sendPhoneOTP, verifyPhoneOTP } = require('./twilio-service');
+  
+  app.post('/api/auth/phone/send-otp', sendPhoneOTP);
+  app.post('/api/auth/phone/verify-otp', verifyPhoneOTP);
 
   // List available OAuth providers
   app.get('/api/auth/providers', (req, res) => {
