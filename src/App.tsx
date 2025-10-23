@@ -25,6 +25,7 @@ const Checkout = lazy(() => import("@/pages/checkout"));
 const Login = lazy(() => import("@/pages/login"));
 const SignUp = lazy(() => import("@/pages/sign-up"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
 const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
 const FarmerDashboard = lazy(() => import("@/pages/farmer-dashboard"));
@@ -51,6 +52,7 @@ function Router() {
             <Route path="/login" component={Login} />
             <Route path="/sign-up" component={SignUp} />
             <Route path="/forgot-password" component={ForgotPassword} />
+            <Route path="/reset-password" component={ResetPassword} />
             <Route path="/profile" component={Profile} />
             <Route path="/orders" component={Orders} />
             <Route path="/admin-login" component={AdminLogin} />
