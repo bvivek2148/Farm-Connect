@@ -509,6 +509,17 @@ const AdminDashboard = () => {
       fetchData();
     });
 
+    // Listen for failed registration attempts
+    newSocket.on('admin:registration-failed', (data: any) => {
+      console.log('Failed registration notification:', data);
+      toast({
+        title: '⚠️ Registration Failed',
+        description: `${data.username || data.email} - ${data.reason}. User may need help.`,
+        variant: 'destructive',
+        duration: 8000, // Show longer for failed attempts
+      });
+    });
+
     newSocket.on('disconnect', () => {
       console.log('Socket.io disconnected');
     });

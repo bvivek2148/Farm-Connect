@@ -191,6 +191,17 @@ export async function registerHandler(req: Request, res: Response, io?: any): Pr
     const existingUser = await storage.getUserByUsername(validatedData.username);
     if (existingUser) {
       console.warn(`Registration: Username '${validatedData.username}' already exists`);
+      
+      // Notify admins about failed registration attempt
+      if (io) {
+        io.emit('admin:registration-failed', {
+          username: validatedData.username,
+          email: validatedData.email,
+          reason: 'Username already exists',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       res.status(400).json({ 
         success: false, 
         message: 'Username already exists. Please choose a different username.',
@@ -203,6 +214,17 @@ export async function registerHandler(req: Request, res: Response, io?: any): Pr
     const existingEmail = await storage.getUserByEmail(validatedData.email);
     if (existingEmail) {
       console.warn(`Registration: Email '${validatedData.email}' already exists`);
+      
+      // Notify admins about failed registration attempt
+      if (io) {
+        io.emit('admin:registration-failed', {
+          username: validatedData.username,
+          email: validatedData.email,
+          reason: 'Email already in use',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       res.status(400).json({ 
         success: false, 
         message: 'Email address already in use. Please use a different email or sign in.',
@@ -255,6 +277,16 @@ export async function registerHandler(req: Request, res: Response, io?: any): Pr
     });
   } catch (error: any) {
     console.error('Error registering user:', error);
+
+    // Notify admins about registration error
+    if (io && req.body.username && req.body.email) {
+      io.emit('admin:registration-failed', {
+        username: req.body.username,
+        email: req.body.email,
+        reason: error.name === 'ZodError' ? 'Invalid form data' : 'Server error',
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Handle Zod validation errors
     if (error.name === 'ZodError') {
