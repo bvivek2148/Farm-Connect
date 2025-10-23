@@ -21,8 +21,8 @@ import { User, Lock, Mail, Facebook, Phone, Chrome, CheckCircle, Github, Apple, 
 
 // Form schema for validation
 const loginSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address",
+  email: z.string().min(3, {
+    message: "Please enter your username, email, or phone number",
   }),
   password: z.string().min(6, {
     message: "Password must be at least 6 characters long",
@@ -206,13 +206,13 @@ const LoginPage = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel>Username / Email / Phone</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
-                              type="email"
-                              placeholder="Enter your email address"
+                              type="text"
+                              placeholder="Enter username, email or phone number"
                               className="pl-10"
                               {...field}
                             />

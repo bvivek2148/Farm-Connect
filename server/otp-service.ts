@@ -1,4 +1,4 @@
-import { db } from './db';
+import { neonDb as db } from '../src/lib/neon';
 import { otpVerifications } from '../shared/schema';
 import { eq, and, gt } from 'drizzle-orm';
 import twilio from 'twilio';
