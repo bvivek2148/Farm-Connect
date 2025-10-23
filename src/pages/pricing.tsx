@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { convertUsdToInr, formatINR } from "@/lib/utils";
+import { formatINR } from "@/lib/utils";
 
 const PricingFeature = ({ feature, included = true, tooltip }: { 
   feature: string; 
@@ -84,14 +84,14 @@ const PricingTier = ({
       
       <div className="mt-4 flex items-baseline">
         <span className="text-3xl font-bold">
-          {formatINR(convertUsdToInr(isAnnual ? price.annual : price.monthly))}
+          {formatINR(isAnnual ? price.annual : price.monthly)}
         </span>
         <span className="ml-1 text-gray-500">/{isAnnual ? 'year' : 'month'}</span>
       </div>
 
       {isAnnual && (
         <div className="mt-1 text-sm text-green-600">
-          Save {formatINR(convertUsdToInr(price.monthly * 12 - price.annual))} annually
+          Save {formatINR(price.monthly * 12 - price.annual)} annually
         </div>
       )}
       
@@ -121,11 +121,11 @@ const PricingPage = () => {
     {
       name: "Basic",
       price: {
-        monthly: 29.99,
-        annual: 299.99,
+        monthly: 499,
+        annual: 4999,
       },
-      monthlyPrice: "29.99",
-      annualPrice: "299.99",
+      monthlyPrice: "499",
+      annualPrice: "4999",
       description: "Essential tools for small farmers just starting out",
       features: [
         { text: "Online store profile", included: true },
@@ -144,11 +144,11 @@ const PricingPage = () => {
     {
       name: "Growth",
       price: {
-        monthly: 79.99,
-        annual: 799.99,
+        monthly: 1499,
+        annual: 14999,
       },
-      monthlyPrice: "79.99",
-      annualPrice: "799.99",
+      monthlyPrice: "1499",
+      annualPrice: "14999",
       description: "Advanced features for scaling farm businesses",
       features: [
         { text: "Online store profile", included: true },
@@ -167,11 +167,11 @@ const PricingPage = () => {
     {
       name: "Enterprise",
       price: {
-        monthly: 199.99,
-        annual: 1999.99,
+        monthly: 3999,
+        annual: 39999,
       },
-      monthlyPrice: "199.99",
-      annualPrice: "1,999.99",
+      monthlyPrice: "3999",
+      annualPrice: "39999",
       description: "Complete solution for large-scale farm operations",
       features: [
         { text: "Online store profile", included: true },
@@ -267,7 +267,7 @@ const PricingPage = () => {
             <div>
               <h3 className="font-medium mb-2">How do payment processing fees work?</h3>
               <p className="text-gray-600">
-                All plans include payment processing at a standard rate of 2.9% + $0.30 per transaction. These fees are separate from your subscription cost and are deducted from each sale before payout.
+                All plans include payment processing at a standard rate of 2.9% + ₹5 per transaction. These fees are separate from your subscription cost and are deducted from each sale before payout.
               </p>
             </div>
             

@@ -107,7 +107,10 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/login" className="hidden md:block py-2 font-medium hover:text-gray-200">Login</Link>
+              <>
+                <Link href="/signup" className="hidden md:block py-2 font-medium hover:text-gray-200">Sign up</Link>
+                <Link href="/login" className="hidden md:block py-2 font-medium hover:text-gray-200">Login</Link>
+              </>
             )}
             <Link href="/contact" className="hidden md:block bg-secondary hover:bg-secondary/90 text-white px-4 py-1.5 rounded-full text-sm font-medium transition">
               Contact Us
@@ -153,7 +156,10 @@ const Header = () => {
                   </button>
                 </div>
               ) : (
-                <Link href="/login" className="py-2 font-medium hover:text-gray-200">Login</Link>
+                <>
+                  <Link href="/signup" className="py-2 font-medium hover:text-gray-200">Sign up</Link>
+                  <Link href="/login" className="py-2 font-medium hover:text-gray-200">Login</Link>
+                </>
               )}
               <Link href="/contact" className="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-full text-sm font-medium transition w-fit">
                 Contact Us

@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, type Contact, type InsertContact, contactSubmissions, products, type Product, type InsertProduct, chatMessages, type ChatMessage, type InsertMessage } from "../shared/schema";
+import { users, type User, type InsertUser, type Contact, type InsertContact, contactSubmissions, products, type Product, type InsertProduct, chatMessages, type ChatMessage, type InsertMessage, orders, orderItems, type Order, type OrderItem } from "../shared/schema";
 import { neonDb as db } from "../src/lib/neon";
 import { eq, desc } from "drizzle-orm";
 import { IStorage } from "./storage";
@@ -193,6 +193,153 @@ export class DatabaseStorage implements IStorage {
       .from(chatMessages)
       .where(eq(chatMessages.sessionId, sessionId))
       .orderBy(chatMessages.createdAt);
+  }
+
+  // Order-related methods
+  async createOrder(orderData: any): Promise<Order> {
+    const [newOrder] = await db
+      .insert(orders)
+      .values({
+        customerId: orderData.customerId,
+        status: orderData.status || 'confirmed',
+        total: orderData.total.toString(),
+        subtotal: orderData.subtotal.toString(),
+        tax: orderData.tax.toString(),
+        shippingAddress: orderData.shippingInfo.address,
+        shippingCity: orderData.shippingInfo.city || null,
+        shippingState: orderData.shippingInfo.state || null,
+        shippingZip: orderData.shippingInfo.zipCode || null,
+        shippingPhone: orderData.shippingInfo.phone || null,
+        paymentMethod: orderData.paymentMethod,
+        notes: orderData.notes || null,
+      })
+      .returning();
+    
+    // Insert order items
+    if (orderData.items && orderData.items.length > 0) {
+      const orderItemsData = orderData.items.map((item: any) => ({
+        orderId: newOrder.id,
+        productId: item.productId || null,
+        productName: item.productName || item.name,
+        productImage: item.productImage || item.image,
+        quantity: item.quantity,
+        price: item.price.toString(),
+        unit: item.unit || null,
+      }));
+      
+      await db.insert(orderItems).values(orderItemsData);
+    }
+    
+    return newOrder;
+  }
+
+  async getUserOrders(userId: number): Promise<any[]> {
+    const userOrders = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.customerId, userId))
+      .orderBy(desc(orders.createdAt));
+    
+    // Fetch order items for each order
+    const ordersWithItems = await Promise.all(
+      userOrders.map(async (order) => {
+        const items = await db
+          .select()
+          .from(orderItems)
+          .where(eq(orderItems.orderId, order.id));
+        
+        return {
+          id: order.id.toString(),
+          date: order.createdAt.toISOString(),
+          status: order.status,
+          total: parseFloat(order.total),
+          items: items.map(item => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: parseFloat(item.price),
+            image: item.productImage || 'https://via.placeholder.com/100x100/22c55e/ffffff?text=Product'
+          })),
+          shippingAddress: `${order.shippingAddress}${order.shippingCity ? ', ' + order.shippingCity : ''}${order.shippingState ? ', ' + order.shippingState : ''}${order.shippingZip ? ' ' + order.shippingZip : ''}`
+        };
+      })
+    );
+    
+    return ordersWithItems;
+  }
+
+  async getAllOrders(): Promise<any[]> {
+    const allOrders = await db
+      .select()
+      .from(orders)
+      .orderBy(desc(orders.createdAt));
+    
+    // Fetch order items and customer info for each order
+    const ordersWithDetails = await Promise.all(
+      allOrders.map(async (order) => {
+        const items = await db
+          .select()
+          .from(orderItems)
+          .where(eq(orderItems.orderId, order.id));
+        
+        const [customer] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, order.customerId));
+        
+        return {
+          id: order.id.toString(),
+          date: order.createdAt.toISOString(),
+          status: order.status,
+          total: parseFloat(order.total),
+          customer: customer ? {
+            id: customer.id,
+            username: customer.username,
+            email: customer.email
+          } : null,
+          items: items.map(item => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: parseFloat(item.price),
+            image: item.productImage || 'https://via.placeholder.com/100x100/22c55e/ffffff?text=Product'
+          })),
+          shippingAddress: `${order.shippingAddress}${order.shippingCity ? ', ' + order.shippingCity : ''}${order.shippingState ? ', ' + order.shippingState : ''}${order.shippingZip ? ' ' + order.shippingZip : ''}`,
+          paymentMethod: order.paymentMethod
+        };
+      })
+    );
+    
+    return ordersWithDetails;
+  }
+
+  async getOrder(orderId: number): Promise<any | undefined> {
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId));
+    
+    if (!order) return undefined;
+    
+    const items = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, order.id));
+    
+    return {
+      ...order,
+      items
+    };
+  }
+
+  async updateOrderStatus(orderId: number, status: string): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+    return updatedOrder;
   }
 
   // Notification-related methods (stub implementations)

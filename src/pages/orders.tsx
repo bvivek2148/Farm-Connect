@@ -7,78 +7,74 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Package, Calendar, MapPin, CreditCard, Eye, Repeat } from 'lucide-react';
 import { Link } from 'wouter';
-import { convertUsdToInr, formatINR } from "@/lib/utils";
+import { formatINR } from "@/lib/utils";
+import { useToast } from '@/hooks/use-toast';
 
-// Mock order data
-const mockOrders = [
-  {
-    id: "ORD-001",
-    date: "2024-01-15",
-    status: "delivered",
-    total: 45.99,
-    items: [
-      { name: "Organic Tomatoes", quantity: 2, price: 12.99, image: "https://images.unsplash.com/photo-1546470427-e5ac89cd0b9b?w=100&h=100&fit=crop" },
-      { name: "Fresh Spinach", quantity: 1, price: 8.99, image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=100&h=100&fit=crop" },
-      { name: "Free-Range Eggs", quantity: 1, price: 14.99, image: "https://images.unsplash.com/photo-1518569656558-1f25e69d93d7?w=100&h=100&fit=crop" }
-    ],
-    shippingAddress: "123 Main St, Springfield, IL 62701"
-  },
-  {
-    id: "ORD-002",
-    date: "2024-01-10",
-    status: "shipped",
-    total: 32.50,
-    items: [
-      { name: "Organic Carrots", quantity: 3, price: 9.99, image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=100&h=100&fit=crop" },
-      { name: "Fresh Herbs Mix", quantity: 1, price: 12.99, image: "https://images.unsplash.com/photo-1462536943532-57a629f6cc60?w=100&h=100&fit=crop" }
-    ],
-    shippingAddress: "123 Main St, Springfield, IL 62701"
-  },
-  {
-    id: "ORD-003",
-    date: "2024-01-05",
-    status: "processing",
-    total: 67.25,
-    items: [
-      { name: "Organic Apples", quantity: 2, price: 15.99, image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=100&h=100&fit=crop" },
-      { name: "Fresh Milk", quantity: 2, price: 8.99, image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=100&h=100&fit=crop" },
-      { name: "Artisan Bread", quantity: 1, price: 12.99, image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=100&h=100&fit=crop" }
-    ],
-    shippingAddress: "123 Main St, Springfield, IL 62701"
-  }
-];
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  image: string;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  status: string;
+  total: number;
+  items: OrderItem[];
+  shippingAddress: string;
+}
 
 const OrdersPage = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
-  // Simulate loading orders from API
+  // Fetch orders from API
   useEffect(() => {
     const loadOrders = async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/orders', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.orders) {
+          setOrders(data.orders);
+        } else {
+          setOrders([]);
+        }
+      } catch (error: any) {
+        console.error('Error fetching orders:', error);
+        setError(error.message || 'Failed to load orders');
+        setOrders([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    loadOrders();
-  }, []);
-  
-  // Show welcome message on first visit
-  useEffect(() => {
-    if (user && !isLoading) {
-      const hasShownWelcome = sessionStorage.getItem('ordersWelcomeShown');
-      if (!hasShownWelcome && mockOrders.length > 0) {
-        setTimeout(() => {
-          // This would normally come from useToast, but we'll import it
-          console.log('Orders page loaded for user:', user.username);
-          sessionStorage.setItem('ordersWelcomeShown', 'true');
-        }, 1000);
-      }
+    if (user) {
+      loadOrders();
     }
-  }, [user, isLoading]);
+  }, [user]);
 
   const formatPrice = (price: number) => {
-    return formatINR(convertUsdToInr(price));
+    return formatINR(price);
   };
 
   const getStatusColor = (status: string) => {
@@ -138,7 +134,7 @@ const OrdersPage = () => {
                 <p className="text-gray-600">Please wait while we fetch your order history.</p>
               </CardContent>
             </Card>
-          ) : mockOrders.length === 0 ? (
+          ) : orders.length === 0 ? (
             <Card>
               <CardContent className="pt-10 pb-10 text-center">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -151,7 +147,7 @@ const OrdersPage = () => {
             </Card>
           ) : (
             <div className="space-y-6">
-              {mockOrders.map((order) => (
+              {orders.map((order) => (
                 <Card key={order.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">

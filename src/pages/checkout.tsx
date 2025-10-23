@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, ShoppingBag, CreditCard, Smartphone, Wallet, Building } from 'lucide-react';
-import { convertUsdToInr, formatINR } from "@/lib/utils";
+import { formatINR } from "@/lib/utils";
 
 // Checkout form schema with conditional validation
 const checkoutFormSchema = z.object({
@@ -83,7 +83,7 @@ export default function Checkout() {
   
   // Format the price in Indian Rupees
   const formatPrice = (price: number) => {
-    return formatINR(convertUsdToInr(price));
+    return formatINR(price);
   };
   
   // Initialize form

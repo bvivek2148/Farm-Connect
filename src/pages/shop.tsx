@@ -17,7 +17,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/HybridAuthContext";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { convertUsdToInr, formatINR } from "@/lib/utils";
+import { formatINR } from "@/lib/utils";
 
 
 // Product type definition
@@ -68,7 +68,7 @@ const ProductCard = ({ product, onAddToCart }: {
         <p className="text-sm text-gray-500">Category: {product.category}</p>
       </CardContent>
       <CardFooter className="flex justify-between pt-2">
-        <div className="font-semibold">{formatINR(convertUsdToInr(product.price))} / {product.unit}</div>
+        <div className="font-semibold">{formatINR(product.price)} / {product.unit}</div>
         <Button
           size="sm"
           onClick={() => onAddToCart(product)}

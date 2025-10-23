@@ -164,3 +164,63 @@ export const createOtpSchema = z.object({
 
 export type OtpVerification = typeof otpVerifications.$inferSelect;
 export type InsertOtp = z.infer<typeof createOtpSchema>;
+
+// Orders schema
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull().references(() => users.id),
+  status: text("status").default("pending").notNull(), // pending, confirmed, processing, shipped, delivered, cancelled
+  total: text("total").notNull(),
+  subtotal: text("subtotal").notNull(),
+  tax: text("tax").notNull(),
+  shippingAddress: text("shipping_address").notNull(),
+  shippingCity: varchar("shipping_city", { length: 100 }),
+  shippingState: varchar("shipping_state", { length: 100 }),
+  shippingZip: varchar("shipping_zip", { length: 20 }),
+  shippingPhone: varchar("shipping_phone", { length: 20 }),
+  paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Order items schema
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id),
+  productId: integer("product_id").references(() => products.id),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  productImage: text("product_image"),
+  quantity: integer("quantity").notNull(),
+  price: text("price").notNull(), // Price at time of order
+  unit: varchar("unit", { length: 50 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const createOrderSchema = z.object({
+  customerId: z.number(),
+  items: z.array(z.object({
+    productId: z.number().optional(),
+    productName: z.string(),
+    productImage: z.string().optional(),
+    quantity: z.number(),
+    price: z.string(),
+    unit: z.string().optional(),
+  })),
+  shippingInfo: z.object({
+    address: z.string(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    phone: z.string().optional(),
+  }),
+  paymentMethod: z.string(),
+  total: z.string(),
+  subtotal: z.string(),
+  tax: z.string(),
+  notes: z.string().optional(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrder = z.infer<typeof createOrderSchema>;

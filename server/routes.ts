@@ -690,11 +690,12 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   // Get all orders (admin only)
   app.get("/api/admin/orders", authenticate, authorize(['admin']), adminRateLimit, async (req, res) => {
     try {
-      // TODO: Implement real orders from database
-      // For now return empty array since orders table doesn't exist yet
+      // Fetch all orders from database with customer details
+      const allOrders = await storage.getAllOrders();
+      
       res.json({
         success: true,
-        orders: []
+        orders: allOrders
       });
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -1234,6 +1235,32 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
     }
   });
 
+  // Get user orders
+  app.get("/api/orders", authenticate, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated"
+        });
+      }
+
+      // Fetch user orders from database
+      const userOrders = await storage.getUserOrders(req.user.userId as number);
+      
+      res.json({
+        success: true,
+        orders: userOrders
+      });
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch orders"
+      });
+    }
+  });
+
   // Order/Checkout API endpoint
   app.post("/api/orders", authenticate, async (req, res) => {
     try {
@@ -1256,35 +1283,68 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
 
       // Calculate total
       const subtotal = orderData.cartItems.reduce((total: number, item: any) => {
-        const price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+        const priceStr = typeof item.price === 'string' ? item.price : item.price.toString();
+        const price = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
         return total + (price * item.quantity);
       }, 0);
 
-      const tax = subtotal * 0.07;
+      const tax = subtotal * 0.05; // 5% tax for India (GST simplified)
       const total = subtotal + tax;
 
-      // Create order object
-      const order = {
-        id: Date.now().toString(),
-        userId: req.user.id,
-        items: orderData.cartItems,
-        shippingInfo: orderData.shippingInfo,
+      // Prepare order data for database
+      const dbOrderData = {
+        customerId: req.user.userId as number,
+        items: orderData.cartItems.map((item: any) => ({
+          productId: item.id || null,
+          productName: item.name,
+          productImage: item.image,
+          quantity: item.quantity,
+          price: typeof item.price === 'string' 
+            ? item.price.replace(/[^0-9.]/g, '') 
+            : item.price.toString(),
+          unit: item.unit
+        })),
+        shippingInfo: {
+          address: orderData.shippingInfo.address,
+          city: orderData.shippingInfo.city,
+          state: orderData.shippingInfo.state,
+          zipCode: orderData.shippingInfo.zipCode,
+          phone: orderData.shippingInfo.phone
+        },
         paymentMethod: orderData.paymentMethod,
         subtotal,
         tax,
         total,
         status: 'confirmed',
-        createdAt: new Date().toISOString(),
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days from now
+        notes: orderData.notes || null
       };
 
-      // In a real app, you would save this to a database
-      // For now, we'll just return success
+      // Save order to database
+      const savedOrder = await storage.createOrder(dbOrderData);
+
+      // Emit real-time notification to admins
+      if (io) {
+        io.emit('admin:new-order', {
+          id: savedOrder.id,
+          customerId: req.user.userId,
+          customer: req.user.username,
+          total: total,
+          timestamp: new Date().toISOString()
+        });
+      }
 
       res.status(201).json({
         success: true,
         message: "Order placed successfully",
-        data: order
+        data: {
+          id: savedOrder.id.toString(),
+          status: savedOrder.status,
+          total,
+          subtotal,
+          tax,
+          createdAt: savedOrder.createdAt.toISOString(),
+          estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        }
       });
     } catch (error) {
       console.error("Error creating order:", error);
