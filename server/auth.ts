@@ -409,19 +409,30 @@ export async function forgotPasswordHandler(req: Request, res: Response): Promis
     if (!email) {
       res.status(400).json({
         success: false,
-        message: 'Email is required'
+        message: 'Username, email, or phone number is required'
       });
       return;
     }
 
-    // Check if user exists
-    const user = await storage.getUserByEmail(email);
+    const input = email.trim();
+
+    // Try to find user by username, email, or phone
+    let user = await storage.getUserByUsername(input);
+
+    if (!user) {
+      user = await storage.getUserByEmail(input);
+    }
+
+    // If still not found and looks like a phone number, try phone lookup
+    if (!user && input.match(/^\+?[1-9]\d{1,14}$/)) {
+      user = await storage.getUserByPhone(input);
+    }
 
     // For better UX, tell user if account doesn't exist and suggest creating one
     if (!user) {
       res.status(404).json({
         success: false,
-        message: 'No account found with this email address. Please create an account first.',
+        message: 'No account found with this username, email, or phone number. Please create an account first.',
         action: 'signup'
       });
       return;
@@ -435,7 +446,8 @@ export async function forgotPasswordHandler(req: Request, res: Response): Promis
     // 2. Send email with reset link
     // For now, we'll just log it and return success
 
-    console.log(`Password reset token for ${email}: ${resetToken}`);
+    console.log(`Password reset requested for user: ${user.username}`);
+    console.log(`Password reset token for ${user.email}: ${resetToken}`);
     console.log(`Reset link would be: ${process.env.FRONTEND_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}`);
 
     // TODO: Send actual email with reset link
@@ -443,9 +455,9 @@ export async function forgotPasswordHandler(req: Request, res: Response): Promis
 
     res.status(200).json({
       success: true,
-      message: 'If an account with that email exists, we have sent password reset instructions.',
+      message: `Password reset instructions have been sent to the email associated with this account (${user.email.substring(0, 3)}***).`,
       // In development, include the token for testing
-      ...(process.env.NODE_ENV === 'development' && { resetToken })
+      ...(process.env.NODE_ENV === 'development' && { resetToken, email: user.email })
     });
 
   } catch (error: any) {

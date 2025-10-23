@@ -22,12 +22,12 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Mail, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft, User } from "lucide-react";
 
 // Form schema for validation
 const forgotPasswordSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address",
+  email: z.string().min(3, {
+    message: "Please enter your username, email, or phone number",
   }),
 });
 
@@ -128,7 +128,7 @@ const ForgotPasswordPage = () => {
                 <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
               </div>
               <CardDescription>
-                Enter your email address and we'll send you instructions to reset your password
+                Enter your username, email, or phone number and we'll send you instructions to reset your password
               </CardDescription>
               <div className="text-xs text-center text-amber-700 mt-3 p-3 bg-amber-50 border border-amber-200 rounded">
                 <strong>⚠️ Important:</strong> This feature only works for existing accounts.
@@ -163,13 +163,13 @@ const ForgotPasswordPage = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Username / Email / Phone</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <Input 
-                                placeholder="Enter your email address" 
-                                type="email"
+                                placeholder="Enter your username, email, or phone number" 
+                                type="text"
                                 className="pl-10"
                                 {...field} 
                               />
