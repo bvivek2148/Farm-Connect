@@ -58,7 +58,7 @@ export async function verifyOTP(phone: string, otp: string): Promise<boolean> {
 // Initialize Twilio client
 let twilioClient: twilio.Twilio | null = null;
 
-if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_MESSAGE_SERVICE_SID) {
   twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   console.log('✅ Twilio SMS service initialized');
 } else {
@@ -69,11 +69,11 @@ if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.e
 export async function sendOTP(phone: string, otp: string): Promise<boolean> {
   try {
     // If Twilio is configured, send real SMS
-    if (twilioClient && process.env.TWILIO_PHONE_NUMBER) {
+    if (twilioClient && process.env.TWILIO_MESSAGE_SERVICE_SID) {
       const message = await twilioClient.messages.create({
         body: `Your Farm Connect verification code is: ${otp}. Valid for 10 minutes.`,
         to: phone,
-        from: process.env.TWILIO_PHONE_NUMBER
+        messagingServiceSid: process.env.TWILIO_MESSAGE_SERVICE_SID
       });
       
       console.log(`✅ SMS sent to ${phone} (SID: ${message.sid})`);
@@ -84,7 +84,7 @@ export async function sendOTP(phone: string, otp: string): Promise<boolean> {
       console.log(`⚠️ To enable real SMS, configure Twilio credentials in .env:`);
       console.log(`   TWILIO_ACCOUNT_SID=your_account_sid`);
       console.log(`   TWILIO_AUTH_TOKEN=your_auth_token`);
-      console.log(`   TWILIO_PHONE_NUMBER=your_twilio_number`);
+      console.log(`   TWILIO_MESSAGE_SERVICE_SID=your_messaging_service_sid`);
       return true;
     }
   } catch (error) {
