@@ -185,6 +185,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          phone: user.phone,
           role: user.role,
           isVerified: user.isVerified,
           createdAt: user.createdAt,
@@ -204,7 +205,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   app.put("/api/admin/users/:id", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
-      const { username, email, role, status, firstName, lastName } = req.body;
+      const { username, email, role, status, firstName, lastName, phone } = req.body;
 
       if (role && !['customer', 'farmer', 'admin'].includes(role)) {
         return res.status(400).json({
@@ -219,6 +220,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
       if (role) updateData.role = role;
       if (firstName) updateData.firstName = firstName;
       if (lastName) updateData.lastName = lastName;
+      if (phone !== undefined) updateData.phone = phone;
 
       const updatedUser = await storage.updateUser(userId, updateData);
 
@@ -238,6 +240,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
           email: updatedUser.email,
           firstName: updatedUser.firstName,
           lastName: updatedUser.lastName,
+          phone: updatedUser.phone,
           role: updatedUser.role,
           isVerified: updatedUser.isVerified,
           createdAt: updatedUser.createdAt
@@ -255,7 +258,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
   // Create new user (admin only)
   app.post("/api/admin/users", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
     try {
-      const { username, email, password, role, firstName, lastName } = req.body;
+      const { username, email, password, role, firstName, lastName, phone } = req.body;
 
       if (!username || !email) {
         return res.status(400).json({
@@ -283,6 +286,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
         password: hashedPassword,
         firstName: firstName || '',
         lastName: lastName || '',
+        phone: phone || '',
         role: role || 'customer',
         isVerified: false
       });
@@ -296,6 +300,7 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
           email: newUser.email,
           firstName: newUser.firstName,
           lastName: newUser.lastName,
+          phone: newUser.phone,
           role: newUser.role,
           isVerified: newUser.isVerified,
           createdAt: newUser.createdAt

@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
   role: text("role").default("customer").notNull(), // customer, farmer, admin
   isVerified: boolean("is_verified").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -22,6 +23,7 @@ export const insertUserSchema = z.object({
   password: z.string(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  phone: z.string().optional(),
   role: z.string().optional(),
 });
 
