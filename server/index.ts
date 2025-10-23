@@ -20,13 +20,15 @@ const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? process.env.CLIENT_URL || 'https://farm-connect-nh7n.onrender.com'
-      : ['http://localhost:3000', 'http://localhost:5173'],
+      ? [process.env.CLIENT_URL || 'https://farm-connect-nh7n.onrender.com', 'https://farm-connect-nh7n.onrender.com']
+      : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5000'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
   pingTimeout: 60000,
   pingInterval: 25000,
+  transports: ['websocket', 'polling'], // Ensure both transports are available
+  allowEIO3: true, // Backward compatibility
 });
 
 // Security middleware

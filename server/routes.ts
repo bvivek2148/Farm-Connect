@@ -64,7 +64,9 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
     }
   });
   
-  app.post("/api/auth/signup", registerHandler); // Removed validateInput as Zod schema provides validation
+  app.post("/api/auth/signup", async (req, res) => {
+    await registerHandler(req, res, io);
+  }); // Removed validateInput as Zod schema provides validation
   
   // Login endpoint with fallback for setup mode
   app.post("/api/auth/login", validateInput, async (req, res) => {

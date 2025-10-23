@@ -152,7 +152,7 @@ export function authorize(roles: string[]) {
 }
 
 // Handler for user registration
-export async function registerHandler(req: Request, res: Response): Promise<void> {
+export async function registerHandler(req: Request, res: Response, io?: any): Promise<void> {
   try {
     console.log('Registration request received:', req.body);
 
@@ -229,6 +229,18 @@ export async function registerHandler(req: Request, res: Response): Promise<void
     sendWelcomeEmail(newUser.email, newUser.username, newUser.role).catch(error => {
       console.error("Failed to send welcome email:", error);
     });
+
+    // Emit real-time notification to admins
+    if (io) {
+      io.emit('admin:new-user', {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`📢 Emitted admin:new-user notification for ${newUser.username}`);
+    }
 
     // Return success response without sensitive data
     res.status(201).json({

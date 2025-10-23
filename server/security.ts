@@ -132,7 +132,7 @@ export function adminRateLimit(req: Request, res: Response, next: NextFunction):
   const key = `${req.ip || 'unknown'}_${req.user?.userId || 'unknown'}`;
   const now = Date.now();
   const windowMs = 5 * 60 * 1000; // 5 minutes
-  const maxAttempts = 10;
+  const maxAttempts = 50; // Increased for admin dashboard operations
   
   let attempts = adminAttempts.get(key);
   
