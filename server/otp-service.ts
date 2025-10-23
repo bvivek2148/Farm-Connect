@@ -1,6 +1,7 @@
 import { db } from './db';
 import { otpVerifications } from '../shared/schema';
 import { eq, and, gt } from 'drizzle-orm';
+import twilio from 'twilio';
 
 // Generate a 6-digit OTP
 export function generateOTP(): string {
@@ -54,21 +55,38 @@ export async function verifyOTP(phone: string, otp: string): Promise<boolean> {
   return true;
 }
 
-// Send OTP via SMS (mock implementation - integrate with Twilio, SNS, etc.)
+// Initialize Twilio client
+let twilioClient: twilio.Twilio | null = null;
+
+if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+  twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  console.log('✅ Twilio SMS service initialized');
+} else {
+  console.warn('⚠️ Twilio credentials not found. SMS sending will be simulated.');
+}
+
+// Send OTP via SMS
 export async function sendOTP(phone: string, otp: string): Promise<boolean> {
   try {
-    // TODO: Integrate with SMS service like Twilio
-    console.log(`📱 Sending OTP to ${phone}: ${otp}`);
-    
-    // For development, just log it
-    // In production, use:
-    // await twilioClient.messages.create({
-    //   body: `Your Farm Connect verification code is: ${otp}`,
-    //   to: phone,
-    //   from: process.env.TWILIO_PHONE_NUMBER
-    // });
-    
-    return true;
+    // If Twilio is configured, send real SMS
+    if (twilioClient && process.env.TWILIO_PHONE_NUMBER) {
+      const message = await twilioClient.messages.create({
+        body: `Your Farm Connect verification code is: ${otp}. Valid for 10 minutes.`,
+        to: phone,
+        from: process.env.TWILIO_PHONE_NUMBER
+      });
+      
+      console.log(`✅ SMS sent to ${phone} (SID: ${message.sid})`);
+      return true;
+    } else {
+      // Development mode - just log the OTP
+      console.log(`📱 [DEV MODE] OTP for ${phone}: ${otp}`);
+      console.log(`⚠️ To enable real SMS, configure Twilio credentials in .env:`);
+      console.log(`   TWILIO_ACCOUNT_SID=your_account_sid`);
+      console.log(`   TWILIO_AUTH_TOKEN=your_auth_token`);
+      console.log(`   TWILIO_PHONE_NUMBER=your_twilio_number`);
+      return true;
+    }
   } catch (error) {
     console.error('Failed to send OTP:', error);
     return false;

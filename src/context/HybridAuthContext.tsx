@@ -365,76 +365,43 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       setIsLoading(true);
       
-      // First, validate username uniqueness by calling backend
-      console.log('🔍 Checking username uniqueness with backend...');
-      const validationResponse = await fetch('/api/auth/check-username', {
+      // Step 1: Send OTP to phone
+      console.log('📱 Sending OTP to phone:', userData.phone);
+      const otpResponse = await fetch('/api/auth/phone/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: userData.username })
+        body: JSON.stringify({ phone: userData.phone })
       });
       
-      const validationData = await validationResponse.json();
-      if (!validationData.available) {
-        console.warn('❌ Username already taken:', userData.username);
+      const otpData = await otpResponse.json();
+      
+      if (!otpData.success) {
         return { 
           success: false, 
-          error: 'This username is already taken. Please choose a different one.',
-          field: 'username'
+          error: otpData.message || 'Failed to send OTP',
+          field: otpData.message.includes('already registered') ? 'phone' : undefined
         };
       }
 
-      const { data, error } = await supabase.auth.signUp({
-        phone: userData.phone,
-        password: userData.password,
-        options: {
-          data: {
-            username: userData.username,
-            first_name: userData.firstName || '',
-            last_name: userData.lastName || '',
-          }
-        }
+      // OTP sent successfully
+      toast({
+        title: "OTP Sent! 📱",
+        description: "We've sent a verification code to your phone. Please enter it to continue.",
       });
-
-      if (error) {
-        return { 
-          success: false, 
-          error: error.message 
-        };
-      }
-
-      if (data.user && !data.session) {
-        toast({
-          title: "Account Created Successfully! 🎉",
-          description: "We've sent you a verification code via SMS. Please verify and then login to continue.",
-        });
-        return { 
-          success: true, 
-          needsVerification: true,
-          message: "Account created! Please verify your phone number."
-        };
-      }
-
-      if (data.user && data.session) {
-        await supabase.auth.signOut();
-        toast({
-          title: "Account Created Successfully! 🎉",
-          description: "Your account has been created successfully. Please login to continue.",
-        });
-        return { 
-          success: true,
-          message: "Account created successfully! Please login to continue."
-        };
-      }
-
+      
+      // Store user data temporarily for verification step
+      sessionStorage.setItem('pendingPhoneSignup', JSON.stringify(userData));
+      
       return { 
-        success: true,
-        message: "Account created successfully! Please login to continue."
+        success: true, 
+        needsVerification: true,
+        message: "OTP sent! Please verify your phone number."
       };
     } catch (error: any) {
       console.error('Phone signup error:', error);
       return { 
         success: false, 
-        error: error.message || 'Failed to create account' 
+        error: error.message || 'Failed to send OTP' 
       };
     } finally {
       setIsLoading(false);
@@ -445,33 +412,78 @@ export const HybridAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       setIsLoading(true);
 
-      const { data, error } = await supabase.auth.verifyOtp({
-        token,
-        type: type === 'email' ? 'email' : 'sms',
-        ...(email && { email }),
-        ...(phone && { phone }),
-      } as any);
+      if (type === 'sms' && phone) {
+        // Use our backend OTP verification for phone
+        const pendingSignup = sessionStorage.getItem('pendingPhoneSignup');
+        if (!pendingSignup) {
+          toast({
+            title: "Verification Failed",
+            description: "Session expired. Please start signup again.",
+            variant: "destructive",
+          });
+          return false;
+        }
 
-      if (error) {
-        toast({
-          title: "Verification Failed",
-          description: error.message,
-          variant: "destructive",
+        const userData = JSON.parse(pendingSignup);
+        
+        const response = await fetch('/api/auth/phone/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone,
+            otp: token,
+            username: userData.username,
+            password: userData.password
+          })
         });
-        return false;
-      }
 
-      if (data.user) {
-        // Sign out after verification so they need to login
-        await supabase.auth.signOut();
+        const data = await response.json();
+
+        if (!data.success) {
+          toast({
+            title: "Verification Failed",
+            description: data.message || "Invalid or expired OTP",
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        // Clear pending signup data
+        sessionStorage.removeItem('pendingPhoneSignup');
+
         toast({
-          title: "Verification Successful! ✅",
-          description: "Your account has been verified. Please login to continue.",
+          title: "Account Created! ✅",
+          description: "Your phone has been verified and account created. Redirecting to login...",
         });
         return true;
-      }
+      } else {
+        // Use Supabase for email OTP verification
+        const { data, error } = await supabase.auth.verifyOtp({
+          token,
+          type: 'email',
+          ...(email && { email }),
+        } as any);
 
-      return false;
+        if (error) {
+          toast({
+            title: "Verification Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        if (data.user) {
+          await supabase.auth.signOut();
+          toast({
+            title: "Verification Successful! ✅",
+            description: "Your account has been verified. Please login to continue.",
+          });
+          return true;
+        }
+
+        return false;
+      }
     } catch (error: any) {
       console.error('OTP verification error:', error);
       toast({
