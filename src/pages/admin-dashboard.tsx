@@ -1960,8 +1960,9 @@ const AdminDashboard = () => {
                     {(() => {
                       // Apply filters to orders
                       const filteredOrders = orders.filter(order => {
+                        const customerName = typeof order.customer === 'string' ? order.customer : (order.customer?.username || order.customer?.email || 'Unknown');
                         const matchesSearch = orderSearchTerm === '' || 
-                          order.customer.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+                          customerName.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
                           order.id.toString().includes(orderSearchTerm);
                         const matchesStatus = orderFilterStatus === 'all' || order.status === orderFilterStatus;
                         return matchesSearch && matchesStatus;
@@ -1977,11 +1978,17 @@ const AdminDashboard = () => {
                         );
                       }
                       
-                      return filteredOrders.map((order) => (
+                      return filteredOrders.map((order) => {
+                        const customerName = typeof order.customer === 'string' ? order.customer : (order.customer?.username || order.customer?.email || 'Unknown');
+                        const itemsText = Array.isArray(order.items) 
+                          ? `${order.items.length} item${order.items.length !== 1 ? 's' : ''}` 
+                          : (typeof order.items === 'string' ? order.items : 'N/A');
+                        
+                        return (
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id}</TableCell>
-                        <TableCell>{order.customer}</TableCell>
-                        <TableCell>{order.items}</TableCell>
+                        <TableCell>{customerName}</TableCell>
+                        <TableCell>{itemsText}</TableCell>
                         <TableCell>{order.total}</TableCell>
                         <TableCell>
                           <Badge 
@@ -2039,7 +2046,8 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                      ));
+                        );
+                      });
                     })()}
                   </TableBody>
                 </Table>
