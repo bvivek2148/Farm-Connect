@@ -200,7 +200,95 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
     }
   });
 
-  // Update user role (admin only)
+  // Update user (admin only) - full update
+  app.put("/api/admin/users/:id", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { username, email, role, status, firstName, lastName } = req.body;
+
+      if (role && !['customer', 'farmer', 'admin'].includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid role. Must be customer, farmer, or admin'
+        });
+      }
+
+      const updateData: any = {};
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+      if (role) updateData.role = role;
+      if (firstName) updateData.firstName = firstName;
+      if (lastName) updateData.lastName = lastName;
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'User updated successfully',
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          role: updatedUser.role,
+          isVerified: updatedUser.isVerified,
+          createdAt: updatedUser.createdAt
+        }
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update user'
+      });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete("/api/admin/users/:id", authenticate, authorize(['admin']), adminRateLimit, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+
+      // Prevent admin from deleting themselves
+      if (req.user?.userId === userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot delete your own account'
+        });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      await storage.deleteUser(userId);
+
+      res.json({
+        success: true,
+        message: 'User deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete user'
+      });
+    }
+  });
+
+  // Update user role (admin only) - kept for backwards compatibility
   app.put("/api/admin/users/:id/role", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
@@ -289,6 +377,144 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
       res.status(500).json({
         success: false,
         message: 'Failed to update settings'
+      });
+    }
+  });
+
+  // Get all orders (admin only)
+  app.get("/api/admin/orders", authenticate, authorize(['admin']), adminRateLimit, async (req, res) => {
+    try {
+      // TODO: Implement real orders from database
+      // For now return empty array since orders table doesn't exist yet
+      res.json({
+        success: true,
+        orders: []
+      });
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch orders'
+      });
+    }
+  });
+
+  // Admin product management endpoints
+  app.post("/api/admin/products", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
+    try {
+      const { name, category, price, unit, image, farmer, distance, organic, featured, description, stock } = req.body;
+      
+      if (!name || !category || !price || !unit) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields: name, category, price, unit'
+        });
+      }
+
+      const productData = {
+        name,
+        category,
+        price,
+        unit: unit || 'kg',
+        image: image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(name)}`,
+        farmer: farmer || 'Admin',
+        farmerId: req.user?.userId || 1,
+        distance: distance || 0,
+        organic: organic !== undefined ? organic : true,
+        featured: featured !== undefined ? featured : false,
+        description: description || '',
+        stock: stock || 0
+      };
+
+      const newProduct = await storage.createProduct(productData);
+      
+      // Emit real-time notification
+      if (io) {
+        io.emit('admin:new-product', {
+          id: newProduct.id,
+          name: newProduct.name,
+          category: newProduct.category,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Product created successfully',
+        product: newProduct
+      });
+    } catch (error: any) {
+      console.error('Error creating product:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to create product'
+      });
+    }
+  });
+
+  app.put("/api/admin/products/:id", authenticate, authorize(['admin']), adminRateLimit, validateInput, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid product ID'
+        });
+      }
+
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      const updatedProduct = await storage.updateProduct(productId, req.body);
+
+      res.json({
+        success: true,
+        message: 'Product updated successfully',
+        product: updatedProduct
+      });
+    } catch (error) {
+      console.error('Error updating product:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update product'
+      });
+    }
+  });
+
+  app.delete("/api/admin/products/:id", authenticate, authorize(['admin']), adminRateLimit, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid product ID'
+        });
+      }
+
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      await storage.deleteProduct(productId);
+
+      res.json({
+        success: true,
+        message: 'Product deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete product'
       });
     }
   });

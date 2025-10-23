@@ -117,6 +117,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import NotificationPanel from '@/components/NotificationPanel';
+import * as adminApi from '@/lib/adminApi';
 
 // No sample data - all data will be fetched from API
 
@@ -575,75 +576,64 @@ const AdminDashboard = () => {
     setShowEditUserModal(true);
   };
 
-  const handleUpdateUser = () => {
-    // Update users state
+  const handleUpdateUser = async () => {
     if (!selectedUser) return;
-    const updatedUsers = users.map(user =>
-      user.id === selectedUser.id ? selectedUser : user
-    );
-    setUsers(updatedUsers);
-
-    // Update localStorage if this user exists there
+    
     try {
-      const currentUser = localStorage.getItem('farmConnectUser');
-      if (currentUser) {
-        const userData = JSON.parse(currentUser);
-        if (userData.username === selectedUser.username) {
-          // Update current user data
-          const updatedUserData = { ...userData, ...selectedUser };
-          localStorage.setItem('farmConnectUser', JSON.stringify(updatedUserData));
-        }
+      const result = await adminApi.updateUser(selectedUser.id, {
+        username: selectedUser.username,
+        email: selectedUser.email,
+        role: selectedUser.role,
+        firstName: selectedUser.firstName,
+        lastName: selectedUser.lastName
+      });
+      
+      if (result.success) {
+        // Update local state
+        const updatedUsers = users.map(user =>
+          user.id === selectedUser.id ? { ...user, ...selectedUser } : user
+        );
+        setUsers(updatedUsers);
+        
+        setShowEditUserModal(false);
+        setSelectedUser(null);
+        
+        toast({
+          title: '✅ User updated',
+          description: 'User information has been updated successfully',
+        });
       }
-
-      // Also check for user-specific storage
-      const userKey = `farmConnectUser_${selectedUser?.username}`;
-      const storedData = localStorage.getItem(userKey);
-      if (storedData) {
-        const userData = JSON.parse(storedData);
-        const updatedUserData = { ...userData, ...selectedUser };
-        localStorage.setItem(userKey, JSON.stringify(updatedUserData));
-      }
-    } catch (error) {
-      console.error('Error updating user in localStorage:', error);
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast({
+        title: '❌ Update failed',
+        description: error.message || 'Failed to update user',
+        variant: 'destructive',
+      });
     }
-
-    setShowEditUserModal(false);
-    setSelectedUser(null);
-
-    toast({
-      title: 'User updated successfully',
-      description: 'User information has been updated',
-    });
   };
 
-  const handleDeleteUser = (userId: number) => {
-    const userToDelete = users.find(user => user.id === userId);
-    if (!userToDelete) return;
-
-    // Remove from users state
-    setUsers(users.filter(user => user.id !== userId));
-
-    // Remove from localStorage
+  const handleDeleteUser = async (userId: number) => {
     try {
-      const userKey = `farmConnectUser_${userToDelete.username}`;
-      localStorage.removeItem(userKey);
-
-      // If this is the current user, also remove main user data
-      const currentUser = localStorage.getItem('farmConnectUser');
-      if (currentUser) {
-        const userData = JSON.parse(currentUser);
-        if (userData.username === userToDelete.username) {
-          localStorage.removeItem('farmConnectUser');
-        }
+      const result = await adminApi.deleteUser(userId);
+      
+      if (result.success) {
+        // Remove from local state
+        setUsers(users.filter(user => user.id !== userId));
+        
+        toast({
+          title: '✅ User deleted',
+          description: 'User has been removed from the system',
+        });
       }
-    } catch (error) {
-      console.error('Error removing user from localStorage:', error);
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: '❌ Delete failed',
+        description: error.message || 'Failed to delete user',
+        variant: 'destructive',
+      });
     }
-
-    toast({
-      title: 'User deleted',
-      description: 'User has been removed from the system',
-    });
   };
 
   const handleToggleUserStatus = (userId: number) => {
@@ -711,7 +701,7 @@ const AdminDashboard = () => {
   };
 
   // Product Management Functions
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.category || !newProduct.price) {
       toast({
         title: 'Error',
@@ -721,22 +711,43 @@ const AdminDashboard = () => {
       return;
     }
 
-    const product = {
-      id: products.length + 1,
-      ...newProduct,
-      stock: typeof newProduct.stock === 'string' ? parseInt(newProduct.stock) : (newProduct.stock || 0),
-      image: newProduct.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(newProduct.name)}`
-    };
+    try {
+      const productData = {
+        name: newProduct.name,
+        category: newProduct.category,
+        price: newProduct.price,
+        unit: 'kg',
+        farmer: newProduct.farmer || 'Admin',
+        distance: 0,
+        stock: typeof newProduct.stock === 'string' ? parseInt(newProduct.stock) : (newProduct.stock || 0),
+        image: newProduct.image || `https://via.placeholder.com/400x300/22c55e/ffffff?text=${encodeURIComponent(newProduct.name)}`,
+        organic: true,
+        featured: false,
+        description: ''
+      };
 
-    setProducts([...products, product]);
-    setNewProduct({ name: '', category: '', farmer: '', price: '', stock: 0, image: '' });
-    setProductImagePreview(null);
-    setShowAddProductModal(false);
-
-    toast({
-      title: 'Product added successfully',
-      description: `${product.name} has been added to the catalog`,
-    });
+      const result = await adminApi.createProduct(productData);
+      
+      if (result.success && result.product) {
+        // Add to local state
+        setProducts([...products, result.product]);
+        setNewProduct({ name: '', category: '', farmer: '', price: '', stock: 0, image: '' });
+        setProductImagePreview(null);
+        setShowAddProductModal(false);
+        
+        toast({
+          title: '✅ Product added',
+          description: `${result.product.name} has been added to the catalog`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding product:', error);
+      toast({
+        title: '❌ Add failed',
+        description: error.message || 'Failed to add product',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleEditProduct = (product: Product) => {
@@ -744,26 +755,56 @@ const AdminDashboard = () => {
     setShowEditProductModal(true);
   };
 
-  const handleUpdateProduct = () => {
+  const handleUpdateProduct = async () => {
     if (!selectedProduct) return;
-    setProducts(products.map(product =>
-      product.id === selectedProduct.id ? selectedProduct : product
-    ));
-    setShowEditProductModal(false);
-    setSelectedProduct(null);
-
-    toast({
-      title: 'Product updated successfully',
-      description: 'Product information has been updated',
-    });
+    
+    try {
+      const result = await adminApi.updateProduct(selectedProduct.id, selectedProduct);
+      
+      if (result.success) {
+        // Update local state
+        setProducts(products.map(product =>
+          product.id === selectedProduct.id ? { ...product, ...selectedProduct } : product
+        ));
+        setShowEditProductModal(false);
+        setSelectedProduct(null);
+        
+        toast({
+          title: '✅ Product updated',
+          description: 'Product information has been updated successfully',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error updating product:', error);
+      toast({
+        title: '❌ Update failed',
+        description: error.message || 'Failed to update product',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleDeleteProduct = (productId: number) => {
-    setProducts(products.filter(product => product.id !== productId));
-    toast({
-      title: 'Product deleted',
-      description: 'Product has been removed from the catalog',
-    });
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      const result = await adminApi.deleteProduct(productId);
+      
+      if (result.success) {
+        // Remove from local state
+        setProducts(products.filter(product => product.id !== productId));
+        
+        toast({
+          title: '✅ Product deleted',
+          description: 'Product has been removed from the catalog',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: '❌ Delete failed',
+        description: error.message || 'Failed to delete product',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Order Management Functions
