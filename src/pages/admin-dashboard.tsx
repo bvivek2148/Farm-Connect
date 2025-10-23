@@ -512,7 +512,7 @@ const AdminDashboard = () => {
       
       // Recalculate statistics
       const newStats = {
-        ...dynamicStatistics,
+        ...statistics,
         totalUsers: users.length,
         totalFarms: users.filter(u => u.role === 'farmer').length,
         totalOrders: orders.length,
@@ -521,7 +521,7 @@ const AdminDashboard = () => {
           return sum + (isNaN(amount) ? 0 : amount);
         }, 0),
       };
-      setDynamicStatistics(newStats);
+      setStatistics(newStats);
       
       toast({
         title: '✅ Data refreshed',

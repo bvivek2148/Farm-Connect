@@ -99,7 +99,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   children, 
   onNotificationCountChange 
 }) => {
-  const [notifications, setNotifications] = useState<Notification[]>(sampleNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const { socket, isConnected } = useSocket();
