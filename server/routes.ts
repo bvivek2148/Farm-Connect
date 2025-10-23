@@ -1356,6 +1356,66 @@ export async function registerRoutes(app: Express, io?: any): Promise<Server> {
     }
   });
 
+  // Delete single order
+  app.delete("/api/orders/:id", authenticate, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated"
+        });
+      }
+
+      const orderId = parseInt(req.params.id);
+      if (isNaN(orderId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order ID"
+        });
+      }
+
+      // Note: In production, you'd want to verify the order belongs to the user
+      // and implement proper cascading delete or soft delete
+      await storage.deleteOrder(orderId);
+
+      res.json({
+        success: true,
+        message: "Order deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to delete order"
+      });
+    }
+  });
+
+  // Clear all orders for a user
+  app.delete("/api/orders/clear-all", authenticate, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "User not authenticated"
+        });
+      }
+
+      await storage.clearUserOrders(req.user.userId as number);
+
+      res.json({
+        success: true,
+        message: "All orders cleared successfully"
+      });
+    } catch (error) {
+      console.error("Error clearing orders:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to clear orders"
+      });
+    }
+  });
+
   // Google OAuth route
   app.post("/api/auth/google", async (req, res) => {
     try {

@@ -1,6 +1,6 @@
 import { users, type User, type InsertUser, type Contact, type InsertContact, contactSubmissions, products, type Product, type InsertProduct, chatMessages, type ChatMessage, type InsertMessage, orders, orderItems, type Order, type OrderItem } from "../shared/schema";
 import { neonDb as db } from "../src/lib/neon";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
@@ -340,6 +340,54 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, orderId))
       .returning();
     return updatedOrder;
+  }
+
+  async deleteOrder(orderId: number): Promise<boolean> {
+    try {
+      // First delete associated order items
+      await db
+        .delete(orderItems)
+        .where(eq(orderItems.orderId, orderId));
+      
+      // Then delete the order
+      await db
+        .delete(orders)
+        .where(eq(orders.id, orderId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      return false;
+    }
+  }
+
+  async clearUserOrders(userId: number): Promise<boolean> {
+    try {
+      // Get all user orders
+      const userOrders = await db
+        .select({ id: orders.id })
+        .from(orders)
+        .where(eq(orders.customerId, userId));
+      
+      const orderIds = userOrders.map(order => order.id);
+      
+      if (orderIds.length > 0) {
+        // Delete all order items for these orders
+        await db
+          .delete(orderItems)
+          .where(inArray(orderItems.orderId, orderIds));
+        
+        // Delete all orders
+        await db
+          .delete(orders)
+          .where(eq(orders.customerId, userId));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error clearing user orders:', error);
+      return false;
+    }
   }
 
   // Notification-related methods (stub implementations)

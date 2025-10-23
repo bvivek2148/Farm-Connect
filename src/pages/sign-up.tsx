@@ -181,12 +181,21 @@ const SignUpPage = () => {
       console.log('Phone signup result:', result);
 
       if (result.success) {
-        // Show success message component
-        setSuccessData({
-          title: "Account Created Successfully! 🎉",
-          description: result.message || "Your account has been created successfully. Please login to continue and start exploring fresh, local products!"
-        });
-        setShowSuccess(true);
+        // Check if needs verification
+        if (result.needsVerification) {
+          // Show OTP input for phone verification
+          setUserPhone(data.phone);
+          setSignupType('phone');
+          setShowOTPInput(true);
+          setStep('verify');
+        } else {
+          // Show success message component
+          setSuccessData({
+            title: "Account Created Successfully! 🎉",
+            description: result.message || "Your account has been created successfully. Please login to continue and start exploring fresh, local products!"
+          });
+          setShowSuccess(true);
+        }
       } else {
         // Handle specific field errors from backend
         const errorMessage = result.error || "Failed to create account. Please try again.";

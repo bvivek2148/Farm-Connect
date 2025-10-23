@@ -5,10 +5,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Package, Calendar, MapPin, CreditCard, Eye, Repeat } from 'lucide-react';
+import { Package, Calendar, MapPin, CreditCard, Eye, Repeat, Trash2, X } from 'lucide-react';
 import { Link } from 'wouter';
 import { formatINR } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface OrderItem {
   name: string;
@@ -32,6 +50,11 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   
   // Fetch orders from API
   useEffect(() => {
@@ -107,6 +130,67 @@ const OrdersPage = () => {
     }
   };
 
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setShowDetailsDialog(true);
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete order');
+      }
+
+      // Remove order from local state
+      setOrders(orders.filter(order => order.id !== orderId));
+      
+      toast({
+        title: "Order Deleted",
+        description: "Order has been successfully removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete order",
+        variant: "destructive",
+      });
+    }
+    setShowDeleteDialog(false);
+    setDeleteOrderId(null);
+  };
+
+  const handleClearAllOrders = async () => {
+    try {
+      const response = await fetch('/api/orders/clear-all', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear orders');
+      }
+
+      setOrders([]);
+      
+      toast({
+        title: "Orders Cleared",
+        description: "All orders have been successfully removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to clear orders",
+        variant: "destructive",
+      });
+    }
+    setShowClearAllDialog(false);
+  };
+
   return (
     <AuthGuard>
       <div className="container mx-auto py-10 px-4 max-w-6xl">
@@ -117,12 +201,23 @@ const OrdersPage = () => {
               <h1 className="text-3xl font-bold">My Orders</h1>
               <p className="text-gray-600 mt-2">Track and manage your orders</p>
             </div>
-            <Button asChild>
-              <Link href="/shop">
-                <Package className="h-4 w-4 mr-2" />
-                Continue Shopping
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              {orders.length > 0 && (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowClearAllDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear All
+                </Button>
+              )}
+              <Button asChild>
+                <Link href="/shop">
+                  <Package className="h-4 w-4 mr-2" />
+                  Continue Shopping
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {/* Loading State */}
@@ -214,7 +309,11 @@ const OrdersPage = () => {
                     {/* Order Actions */}
                     <div className="flex items-center justify-between pt-4">
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewDetails(order)}
+                        >
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </Button>
@@ -224,6 +323,17 @@ const OrdersPage = () => {
                             Reorder
                           </Button>
                         )}
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => {
+                            setDeleteOrderId(order.id);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
                       </div>
                       {order.status === 'shipped' && (
                         <Button size="sm">
@@ -237,6 +347,123 @@ const OrdersPage = () => {
             </div>
           )}
         </div>
+
+        {/* Order Details Dialog */}
+        <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Order Details - #{selectedOrder?.id}</DialogTitle>
+              <DialogDescription>
+                Placed on {selectedOrder && new Date(selectedOrder.date).toLocaleDateString()}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedOrder && (
+              <div className="space-y-4">
+                {/* Order Status */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Order Status</p>
+                    <Badge className={`${getStatusColor(selectedOrder.status)} mt-1`}>
+                      <span className="mr-1">{getStatusIcon(selectedOrder.status)}</span>
+                      {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                    </Badge>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-700">Total Amount</p>
+                    <p className="text-xl font-bold text-primary mt-1">{formatPrice(selectedOrder.total)}</p>
+                  </div>
+                </div>
+
+                {/* Order Items */}
+                <div>
+                  <h3 className="font-semibold mb-3">Items Ordered</h3>
+                  <div className="space-y-3">
+                    {selectedOrder.items.map((item, index) => (
+                      <div key={index} className="flex items-center space-x-4 p-3 border rounded-lg">
+                        <div className="w-16 h-16 rounded-md overflow-hidden border">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = `https://via.placeholder.com/100x100/22c55e/ffffff?text=${encodeURIComponent(item.name.charAt(0))}`;
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                          <p className="text-sm text-gray-600">Price per unit: {formatPrice(item.price)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">{formatPrice(item.price * item.quantity)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div>
+                  <h3 className="font-semibold mb-2">Shipping Address</h3>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
+                      <p className="text-sm text-gray-700">{selectedOrder.shippingAddress}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button onClick={() => setShowDetailsDialog(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Single Order Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Order?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this order? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteOrderId && handleDeleteOrder(deleteOrderId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Clear All Orders Dialog */}
+        <AlertDialog open={showClearAllDialog} onOpenChange={setShowClearAllDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear All Orders?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete all your orders? This action cannot be undone and will remove all order history.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleClearAllOrders}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Clear All
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AuthGuard>
   );
